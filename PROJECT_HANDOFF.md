@@ -1,5 +1,7 @@
 # Our Little Museum — 项目背景与开发交接
 
+> **Netlify 部署（2026-11-23）**：已手动上传白名单构建的公开 DEMO 至 https://scintillating-taiyaki-20c7ef.netlify.app/ 。生产站点已获主人明确同意公开，Deploy Preview 保持私密；真实照片、聊天和正式生日信未上传。未连接 GitHub 自动部署，更新需运行 `node tools/build_netlify.mjs` 后上传 `dist`。国内网络访问仍需用实际手机测试。下文旧的“部署未确认”不适用于这个 Netlify 示例站。
+
 > **Codex 本轮接手状态**：已在本地填充 39 个真实节点、4 个篇章、10 个地点，加入新提供的四张毕业照，修正网页派生图方向并保留原始归档。终厅已加入主人确认的完整原文，称呼与 16 段正文逐段回读一致；本地已关闭“信件待写”提示。真实内容仅在被忽略的 `private/` 中；公开 `content.js` 仍为示例。下文“素材尚未提供”等为初版历史状态，以此条和当前代码为准。真实素材的 GitHub 存储/部署方案仍待主人决定。代码增加了 `tools/check_content.mjs`，可离线检查内容引用。
 
 > **2026-11-23 更新**：Claude Code 已完成审查与交互 v2（篇章、聊天截图 / 拍立得展品、灯箱、地点↔时间互链、私密内容工作流）。最新状态与后续任务以 [docs/DESIGN_PLAN.md](docs/DESIGN_PLAN.md) 为准。

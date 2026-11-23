@@ -69,6 +69,8 @@ node tools/check_content.mjs
 
 ### Netlify 公开示例部署
 
+2026-11-23 已通过手动上传部署公开测试站：[打开 Netlify 示例版](https://scintillating-taiyaki-20c7ef.netlify.app/)。生产站点公开，Deploy Preview 保持私密。此次未连接 GitHub 自动部署；更新后需重新构建并上传 `dist`。免费版会显示 Netlify 标识。
+
 当前 Netlify 配置用于**公开 DEMO 与国内访问测试**，不包含本地真实故事、照片或情书。连接本 GitHub 仓库后，构建命令为 `node tools/build_netlify.mjs`，发布目录为 `dist`；`netlify.toml` 已写好这两个设置。无需安装 npm 依赖。
 
 如需手动上传，在项目目录运行同一构建命令，再把生成的 `dist` 文件夹上传到 Netlify。构建只复制 7 个站点根文件和 `assets/` 中的 SVG 示例插画，并验证 `demoMode: true`、资源引用与复制结果；不会复制 `private/`、文档、工具、Git 文件或原始照片。生成的入口会标记为公开示例模式，跳过私密内容请求；本地源文件仍保持原有加载方式。`dist/` 已排除出 Git。脚本只重建自己标记过、且没有未知文件的 `dist`，遇到其他目录内容会停止。
