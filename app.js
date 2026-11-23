@@ -4,10 +4,11 @@
   /* ------------------------------------------------------------------
    * 启动：先尝试加载本地私密内容 private/content.js（已被 .gitignore 排除），
    * 加载不到就使用公开仓库里的示范内容 content.js。
-   * 公开 DEMO（*.github.io）上不去请求私密文件，避免无意义的 404。
+   * 公开构建显式标记为 demo；GitHub Pages 也跳过私密文件请求。
    * ------------------------------------------------------------------ */
   const PRIVATE_SRC = 'private/content.js';
-  const shouldTryPrivate = !/\.github\.io$/i.test(location.hostname);
+  const shouldTryPrivate = document.documentElement.dataset.contentMode !== 'demo'
+    && !/\.github\.io$/i.test(location.hostname);
   if (shouldTryPrivate) {
     const s = document.createElement('script');
     s.src = PRIVATE_SRC + '?t=' + Date.now(); // 不缓存：改完 private/content.js 刷新即可看到

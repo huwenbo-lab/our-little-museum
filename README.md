@@ -67,6 +67,16 @@ node tools/check_content.mjs
 
 ## 部署与隐私
 
+### Netlify 公开示例部署
+
+当前 Netlify 配置用于**公开 DEMO 与国内访问测试**，不包含本地真实故事、照片或情书。连接本 GitHub 仓库后，构建命令为 `node tools/build_netlify.mjs`，发布目录为 `dist`；`netlify.toml` 已写好这两个设置。无需安装 npm 依赖。
+
+如需手动上传，在项目目录运行同一构建命令，再把生成的 `dist` 文件夹上传到 Netlify。构建只复制 7 个站点根文件和 `assets/` 中的 SVG 示例插画，并验证 `demoMode: true`、资源引用与复制结果；不会复制 `private/`、文档、工具、Git 文件或原始照片。生成的入口会标记为公开示例模式，跳过私密内容请求；本地源文件仍保持原有加载方式。`dist/` 已排除出 Git。脚本只重建自己标记过、且没有未知文件的 `dist`，遇到其他目录内容会停止。
+
+此配置不提供私人素材的访问控制。真实礼物的上线方案需另行配置。
+
+### GitHub Pages 与私密素材
+
 代码已提交 GitHub；**GitHub Pages 的实际部署状态尚未核实**。如要使用 GitHub Pages，可前往仓库 `Settings → Pages → Build and deployment`，选择 `Deploy from a branch → main → /(root)`。完成并确认部署后，通常会获得形如 `https://huwenbo-lab.github.io/our-little-museum/` 的网址；**在验证前不要视为已上线**。
 
 **本仓库当前为 PUBLIC，GitHub Pages 也是公开静态托管。** 不要将真实私人照片、私密聊天、个人身份信息和正式情书直接提交进来，除非用户明确同意该内容公开。即使之后删除文件，Git 历史也可能保留原内容。「隐藏链接」或前端 JavaScript 密码弹窗不构成安全的访问控制。如需仅供两个人访问，必须另行选择真正具备身份认证/访问控制的部署方案。
