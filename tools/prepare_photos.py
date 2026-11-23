@@ -2,7 +2,8 @@
 """
 把本地照片归档整理成网页可用的小图，输出到 site/private/photos/（不会进入 Git）。
 
-只依赖 macOS 自带的 sips，不需要安装任何 Python 包。
+使用 Pillow 解码并压缩照片，sips 只读取尺寸与方向信息。
+请使用包含 Pillow 的 Python 运行；避免 sips 将部分 iPhone MPO/JPEG 转为纯黑。
 
 做了什么：
   1. 读取「照片归档清单.csv」里「处理状态 = 按年月归档」的行；
@@ -23,6 +24,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit('缺少 Pillow，请运行：python3 -m pip install Pillow')
 
 SITE = Path(__file__).resolve().parent.parent
 OUT_DIR = SITE / 'private' / 'photos'
@@ -64,20 +69,25 @@ def strip_metadata(jpeg_path):
     jpeg_path.write_bytes(bytes(out))
 
 
-def convert(src, dst, is_screenshot):
+def convert(src, dst, is_screenshot, display_rotation=0):
     dst.parent.mkdir(parents=True, exist_ok=True)
     props = sips_props(src)
     with tempfile.TemporaryDirectory() as tmp:
         tmp_jpg = Path(tmp) / 'x.jpg'
-        cmd = ['sips', '-s', 'format', 'jpeg', '-s', 'formatOptions', '85' if is_screenshot else '82']
-        rot = ROTATE.get(props.get('orientation', ''))
+        # 部分旧照片的像素本身横躺而没有 EXIF；保留人工核验过的显示修正。
+        rot = (ROTATE.get(props.get('orientation', ''), 0) + display_rotation) % 360
+        # sips 会把部分多图 MPO/JPEG 的缩略输出写成纯黑；明确解码主图。
+        # rot 已合并原有方向规则与人工修正，不再额外做 exif_transpose。
+        with Image.open(src) as source:
+            source.seek(0)
+            image = source.convert('RGB')
         if rot:
-            cmd += ['-r', str(rot)]
-        if is_screenshot:
-            cmd += ['--resampleWidth', '1080'] if int(props.get('pixelWidth', 0) or 0) > 1080 else []
-        else:
-            cmd += ['-Z', '1800']
-        subprocess.run(cmd + [str(src), '--out', str(tmp_jpg)], check=True, capture_output=True)
+            image = image.rotate(-rot, expand=True)
+        if is_screenshot and image.width > 1080:
+            image = image.resize((1080, round(image.height * 1080 / image.width)), Image.Resampling.LANCZOS)
+        elif not is_screenshot:
+            image.thumbnail((1800, 1800), Image.Resampling.LANCZOS)
+        image.save(tmp_jpg, 'JPEG', quality=85 if is_screenshot else 82, optimize=True)
         strip_metadata(tmp_jpg)
         dst.write_bytes(tmp_jpg.read_bytes())
     p = sips_props(dst)
@@ -94,6 +104,8 @@ def main():
 
     root = Path(args.root)
     rows = list(csv.DictReader(open(args.csv, encoding='utf-8-sig')))
+    index_path = SITE / 'private' / 'photo-index.json'
+    previous = {p['source']: p for p in json.loads(index_path.read_text(encoding='utf-8'))} if index_path.exists() else {}
     index, missing = [], []
     for row in rows:
         if row.get('处理状态') != '按年月归档':
@@ -105,9 +117,10 @@ def main():
             missing.append(rel)
             continue
         is_shot = src.suffix.lower() == '.png'
+        display_rotation = previous.get(rel, {}).get('displayRotation', 0)
         dst = OUT_DIR / Path(rel).with_suffix('.jpg')
         if args.force or not dst.exists():
-            w, h = convert(src, dst, is_shot)
+            w, h = convert(src, dst, is_shot, display_rotation)
         else:
             p = sips_props(dst)
             w, h = int(p.get('pixelWidth', 0) or 0), int(p.get('pixelHeight', 0) or 0)
@@ -119,11 +132,12 @@ def main():
             'type': 'chat' if is_shot else 'photo',
             'orientation': 'portrait' if h > w else 'landscape',
             'note': row.get('备注', ''),
+            **({'displayRotation': display_rotation} if display_rotation else {}),
         })
         print(f"✓ {rel} → {index[-1]['src']} ({w}×{h})")
 
     (SITE / 'private').mkdir(exist_ok=True)
-    (SITE / 'private' / 'photo-index.json').write_text(json.dumps(index, ensure_ascii=False, indent=1), encoding='utf-8')
+    index_path.write_text(json.dumps(index, ensure_ascii=False, indent=1), encoding='utf-8')
     print(f"\n完成：{len(index)} 张，索引写入 private/photo-index.json")
     if missing:
         print(f"找不到 {len(missing)} 个文件：", *missing, sep='\n  ')

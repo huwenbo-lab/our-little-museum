@@ -3,3 +3,5 @@ private/*
 !private/README.md
 .DS_Store
 .claude/
+__pycache__/
+*.py[cod]

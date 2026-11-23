@@ -47,6 +47,7 @@
   ];
   const state = { room: 'intro', timelineIndex: 0, photoIndex: 0, placeIndex: 0, letterOpened: false, drawerOpen: false, modalOpen: false, soundOn: false, soundNodes: null, gallery: null };
   let toastTimer;
+  let letterTimer;
   let lastFocus = null;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -80,6 +81,7 @@
 
   const isDemo = Boolean(data.demoMode);
   document.getElementById('demo-indicator').hidden = !isDemo;
+  document.getElementById('demo-indicator').textContent = data.statusLabel || 'DEMO · 示例内容';
   document.title = `${data.englishTitle} · ${data.title}`;
   if (fromPrivate) document.documentElement.dataset.content = 'private';
 
@@ -106,7 +108,7 @@
   }
 
   function foyer() {
-    const counts = { timeline: `${data.timeline.length} 件时间展品`, places: `${data.places.length} 个地点`, letter: '1 封信' };
+    const counts = { timeline: `${data.timeline.length} 件时间展品`, places: `${data.places.length} 个地点`, letter: data.letter?.pending ? '一封待写的信' : '1 封信' };
     const roomTiles = rooms.slice(1).map(room => `<button type="button" class="room-tile" data-room="${room.id}" aria-label="进入${e(room.title)}">
       ${img(room.image, `展厅 ${room.number} 的示意画面`)}
       <span class="tile-number">GALLERY ${room.number} / 03</span>
@@ -196,7 +198,7 @@
     return `<section class="scene places-scene"><div class="room-content">
       <div class="section-head"><div><span class="eyebrow">GALLERY 02 · AN ATLAS OF MEMORIES</span><h1 class="display-title">足迹展厅</h1></div><p>有些地方，因为一起去过，<br>从此有了不同的意义。</p></div>
       <div class="atlas-layout">
-        <div class="atlas-map" role="group" aria-label="可点击的回忆地点示意图"><div class="atlas-sun"></div><svg class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${path}</svg><div class="atlas-corner">COORDINATES OF MEMORY</div><div class="atlas-corner bottom">NOT TO SCALE · 点击光点参观</div>${markers}</div>
+        <div class="atlas-map" role="group" aria-label="可点击的回忆地点示意图"><div class="atlas-sun"></div><svg class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${path}</svg><div class="atlas-corner">COORDINATES OF MEMORY</div>${markers}</div>
         <article class="place-detail"><button type="button" class="place-cover" data-action="place-gallery" aria-label="查看${e(place.name)}的照片">${img(cover.src, `地点：${place.name}`)}${real && list.length > 1 ? `<span class="place-count">${list.length} 张照片 ↗</span>` : ''}</button><div class="place-copy"><span class="eyebrow">LOCATION ${pad2(state.placeIndex + 1)} / ${pad2(data.places.length)}</span><h3>${e(place.name)}</h3><div class="event-en">${e(place.caption)}</div><p>${e(place.description)}</p>${visits}<div class="place-pagers">${pagers}</div></div></article>
       </div>
       <p class="places-footnote">这是一张「回忆星图」：光点的位置按心意摆放，不代表真实的地理方位。</p>
@@ -248,10 +250,12 @@
   }
   function navigate(id, writeHash = true) {
     if (!sceneIds.includes(id)) return;
+    clearTimeout(letterTimer);
+    letterTimer = null;
     closeDrawer(); closeModal();
     if (id !== state.room) state.letterOpened = false;
     state.room = id;
-    if (writeHash && location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
+    if (writeHash && location.hash !== `#${id}`) history.pushState(null, '', `#${id}`);
     render();
     window.scrollTo({ top: 0, behavior: 'instant' });
     root.focus({ preventScroll: true });
@@ -292,25 +296,34 @@
   function openDrawer() {
     lastFocus = document.activeElement;
     state.drawerOpen = true; drawer.classList.add('is-open'); drawer.setAttribute('aria-hidden', 'false'); drawer.inert = false; drawerBackdrop.hidden = false;
+    updateBackgroundInert();
     document.getElementById('map-button').setAttribute('aria-expanded', 'true');
     setTimeout(() => (drawer.querySelector('.drawer-item.is-active') || drawer.querySelector('.drawer-item'))?.focus(), 30);
   }
   function closeDrawer() {
     const wasOpen = state.drawerOpen;
     state.drawerOpen = false; drawer.classList.remove('is-open'); drawer.setAttribute('aria-hidden', 'true'); drawer.inert = true; drawerBackdrop.hidden = true;
+    updateBackgroundInert();
     document.getElementById('map-button').setAttribute('aria-expanded', 'false');
     if (wasOpen && lastFocus && document.contains(lastFocus)) lastFocus.focus();
   }
   drawer.inert = true;
 
+  function updateBackgroundInert() {
+    // Both overlays live outside the app shell, so its controls must stay inactive.
+    document.querySelector('.app-shell').inert = state.drawerOpen || state.modalOpen;
+  }
+
   function openModal(markup) {
     if (!state.modalOpen) lastFocus = document.activeElement;
     modalContent.innerHTML = markup; modal.hidden = false; state.modalOpen = true; document.body.style.overflow = 'hidden';
+    updateBackgroundInert();
     modal.querySelector('.modal-close').focus();
   }
   function closeModal() {
     if (!state.modalOpen) return;
     modal.hidden = true; state.modalOpen = false; state.gallery = null; document.body.style.overflow = '';
+    updateBackgroundInert();
     if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
   }
 
@@ -318,10 +331,11 @@
   function expandForLightbox(list) {
     return list.flatMap(m => m.type === 'polaroid' && m.back ? [{ ...m, side: '正面' }, { src: m.back, type: 'polaroid-back', caption: `${m.caption || ''}（背面）` }] : [m]);
   }
-  function openGallery(list, start, title) {
+  function openGallery(list, start, title, showBack = false) {
     const items = expandForLightbox(list);
     let idx = 0, seen = 0;
     list.forEach((m, i) => { if (i === start) idx = seen; seen += m.type === 'polaroid' && m.back ? 2 : 1; });
+    if (showBack && list[start]?.type === 'polaroid' && list[start].back) idx += 1;
     state.gallery = { items, index: idx, title };
     renderGallery();
   }
@@ -342,8 +356,13 @@
 
   function openLetter() {
     const btn = root.querySelector('.envelope-button');
-    const done = () => { state.letterOpened = true; render({ soft: true }); root.querySelector('.letter-paper')?.focus({ preventScroll: true }); };
-    if (btn && !reduceMotion) { btn.classList.add('is-opening'); btn.disabled = true; setTimeout(done, 900); } else done();
+    clearTimeout(letterTimer);
+    const done = () => {
+      letterTimer = null;
+      if (state.room !== 'letter') return;
+      state.letterOpened = true; render({ soft: true }); root.querySelector('.letter-paper')?.focus({ preventScroll: true });
+    };
+    if (btn && !reduceMotion) { btn.classList.add('is-opening'); btn.disabled = true; letterTimer = setTimeout(done, 900); } else done();
   }
   function closeLetter() { state.letterOpened = false; render({ soft: true }); root.querySelector('.envelope-button')?.focus({ preventScroll: true }); }
   function toast(text) { clearTimeout(toastTimer); toastEl.textContent = text; toastEl.classList.add('is-visible'); toastTimer = setTimeout(() => toastEl.classList.remove('is-visible'), 2400); }
@@ -372,7 +391,7 @@
   function currentLightboxSource(node) {
     if (state.room === 'places') { const p = data.places[state.placeIndex]; return { list: mediaOf(p).list, start: 0, title: p.name }; }
     const item = data.timeline[state.timelineIndex];
-    return { list: mediaOf(item).list, start: state.photoIndex, title: item.title };
+    return { list: mediaOf(item).list, start: state.photoIndex, title: item.title, showBack: Boolean(root.querySelector('.polaroid.is-flipped')) };
   }
 
   document.addEventListener('click', event => {
@@ -401,7 +420,7 @@
       case 'goto-event': state.timelineIndex = index; state.photoIndex = 0; navigate('timeline'); break;
       case 'goto-place': state.placeIndex = index; navigate('places'); break;
       case 'place-gallery':
-      case 'lightbox': { const src = currentLightboxSource(actionNode); if (src.list[0]?.type === 'placeholder') { toast('这件展品还在等待真实照片'); break; } openGallery(src.list, src.start, src.title); break; }
+      case 'lightbox': { const src = currentLightboxSource(actionNode); if (src.list[0]?.type === 'placeholder') { toast('这件展品还在等待真实照片'); break; } openGallery(src.list, src.start, src.title, src.showBack); break; }
       case 'gallery-prev': stepGallery(-1); break;
       case 'gallery-next': stepGallery(1); break;
       case 'close-modal': closeModal(); break;
@@ -448,7 +467,11 @@
     else if (!event.shiftKey && document.activeElement === last) { first.focus(); event.preventDefault(); }
   }
 
-  window.addEventListener('hashchange', () => { const id = location.hash.replace('#', ''); if (id !== state.room && sceneIds.includes(id)) navigate(id, false); });
-  navigate(sceneIds.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'intro');
+  const restoreRoom = () => { const id = location.hash.replace('#', ''); if (id !== state.room && sceneIds.includes(id)) navigate(id, false); };
+  window.addEventListener('hashchange', restoreRoom);
+  window.addEventListener('popstate', restoreRoom);
+  const initialRoom = sceneIds.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'intro';
+  history.replaceState(null, '', `#${initialRoom}`);
+  navigate(initialRoom, false);
   }
 })();
