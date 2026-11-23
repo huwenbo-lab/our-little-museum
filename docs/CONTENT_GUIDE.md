@@ -18,6 +18,8 @@ python3 tools/prepare_photos.py
 
 ## 二、写内容：`private/content.js`
 
+> `private/` 不在 Git 里，没有历史版本可以找回。动手改之前先复制一份，例如 `private/content.backup-20261124.js`。
+
 结构和 `content.js` 完全一样。最常改的几块：
 
 ### 篇章
@@ -59,16 +61,24 @@ photos: [
 - 可填写 `width`、`height`（拍立得背面为 `backWidth`、`backHeight`）预留图片空间，避免长图加载时跳位。这些数字是网页派生图的像素尺寸，不改变原图。
 - `caption` 默认保留作图片的无障碍说明。只有相册合页、共用日期等必要说明在图下显示；其他需要展示的图注可加 `showCaption: true`。
 - 没有照片的事件写 `photos: []`，会显示 `cover` 指定的占位插画。
+- 一件展品超过 2 张聊天截图时，只展开前 2 张，其余收进「还有 N 张聊天记录」。想指定展开哪几张，给它们加 `key: true`。
+- 标题写成短句，例如“麦麦卡、蓝莓和稻香村”，不要用空格隔开几个关键词。
 
 ### 地点
 ```js
-{ id: 'beidaihe', no: '01', name: '北戴河', short: '北戴河', caption: '副标题',
+{ id: 'beidaihe', name: '北戴河', short: '北戴河', caption: '副标题',
   description: '说明', photos: [ … ], events: ['beidaihe-god', 'beidaihe-together'],
-  x: 74, y: 24 }   // 星图上的位置，0–100，不是经纬度
+  lat: 39.83, lng: 119.48 }   // 城市大致经纬度，只用来决定星图上的相对方位
 ```
+- 星图位置由 `lat/lng` 自动算出（中部会被适当拉开、太近的自动推开），地名放左放右也自动决定。没有 `lat/lng` 时才用 `x/y`（0–100）手动摆放。
+- 星座线和地点顺序按 `events` 里最早的那件回忆决定，所以 `events` 要填全。
 
 ### 其他
 - `since: '2024-03-16'`：显示“我们相识的第 N 天”。
+- `roomCovers`：大厅三张卡片的照片，`position` 控制露出照片的哪一部分（如 `'center 60%'`）：
+  ```js
+  roomCovers: { timeline: { src: 'private/photos/…', position: 'center 60%' }, places: { … }, letter: { … } }
+  ```
 - `letter`：终厅的信；`paragraphs` 每段一个字符串，可加 `date`。
 - 全部完成后把 `demoMode` 改为 `false`，右上角的 DEMO 标记就会消失。
 

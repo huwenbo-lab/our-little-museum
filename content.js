@@ -36,6 +36,8 @@ window.MUSEUM_CONTENT = {
     { id:'today', chapter:'c3', no:'06', date:'现在', title:'直到今天，仍然是你', subtitle:'AND HERE WE ARE', short:'故事没有停在过去，它一直在发生。', story:'写下此时此刻，你最想让她知道的一件事。这是第一期展览的最后一件时间展品，但不是故事的最后一页。', cover:'assets/memory-today.svg', photos:[] }
   ],
   // events：在这个地点发生过的时间线事件 id，详情里会出现“在这里发生过”的跳转链接。
+  // lat/lng：城市大致经纬度，填了就按方位自动摆放；不填则用 x/y。
+  // 另可在顶层加 roomCovers: { timeline:{src,position}, places:{…}, letter:{…} } 给大厅卡片换真实照片。
   // 若后续要接入真实地图，可在这里加入坐标 lat、lng。
   // x、y 仅控制当前“回忆星图”中的视觉位置，不代表真实经纬度。
   places: [

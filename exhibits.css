@@ -173,3 +173,56 @@ button:focus-visible, a:focus-visible { outline-color: #a55c6c; }
   .modal-backdrop { padding: 8px; }
   .exhibit-modal { padding: 40px 8px 16px; max-height: calc(100dvh - 16px); }
 }
+
+/* ===================== 2026-11-24 调整 ===================== */
+
+/* 时间轴：圆点和连线移到文字上方，日期不再像被划掉 */
+.timeline-node { padding: 24px 22px 2px 0; }
+.timeline-node:before { left: 0; top: 2px; z-index: 1; }
+.timeline-node:not(:last-child):after { left: 16px; right: 4px; top: 7px; z-index: 0; background: rgba(171,121,110,.32); }
+
+/* 大厅：三张卡片用真实照片 */
+.room-tile.has-photo img.room-photo { width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: saturate(.92) contrast(1.02); }
+.room-tile.has-photo:hover img.room-photo { opacity: 1; transform: scale(1.04); }
+.room-tile.has-photo:after { background: linear-gradient(180deg, rgba(255,250,246,0) 38%, rgba(255,249,244,.72) 70%, rgba(255,250,246,.97) 100%); }
+@media (max-width: 550px) { .room-tile.has-photo { height: 220px; } }
+
+/* 聊天截图：超过两张时其余收起，点开再看 */
+.more-chats { margin-top: 22px; }
+.more-chats > summary { list-style: none; cursor: pointer; width: fit-content; margin: 0 auto; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 10px 20px; border: 1px solid var(--line); background: var(--paper); color: #8f5562; font-size: .9375rem; letter-spacing: .02em; }
+.more-chats > summary::-webkit-details-marker { display: none; }
+.more-chats > summary::after { content: "展开"; font-size: .8125rem; color: #a5838a; }
+.more-chats[open] > summary::after { content: "收起"; }
+.more-chats > summary:hover { border-color: #c58c96; }
+.more-chats > .memory-gallery { margin-top: 24px; }
+
+/* 足迹：按大致方位的星图 + 一条按先后连起来的星座线 */
+.atlas-aside { min-width: 0; }
+.atlas-map.star-map { aspect-ratio: 1 / 1; min-height: 0 !important; width: 100%; }
+.atlas-route { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.atlas-route line { stroke: rgba(176,112,118,.22); stroke-width: .35; stroke-linecap: round; transition: stroke .3s; }
+.atlas-route line.is-near { stroke: rgba(170,96,108,.75); stroke-width: .55; stroke-dasharray: 1.2 1; }
+.star { position: absolute; transform: translate(-50%, -50%); width: 44px; height: 44px; border: 0; padding: 0; background: transparent; display: grid; place-items: center; z-index: 1; }
+.star-dot { width: 12px; height: 12px; border-radius: 50%; background: #fffaf6; box-shadow: 0 0 0 1.5px #b87983, 0 0 0 7px rgba(201,132,136,.10); transition: transform .25s, background .25s, box-shadow .25s; }
+.star:hover .star-dot { transform: scale(1.25); }
+.star.is-active { z-index: 2; }
+.star.is-active .star-dot { background: #b46f7b; transform: scale(1.35); box-shadow: 0 0 0 2px #fff, 0 0 0 9px rgba(185,116,124,.20), 0 0 22px rgba(185,116,124,.45); }
+.star-name { position: absolute; left: calc(50% + 12px); top: 50%; transform: translateY(-50%); white-space: nowrap; font-family: var(--font-serif); font-size: .9375rem; color: #6c5257; background: rgba(255,251,247,.78); padding: 0 5px; border-radius: 2px; pointer-events: none; }
+.star.is-left .star-name { left: auto; right: calc(50% + 12px); }
+.star.is-active .star-name { color: #8f4f5c; font-weight: 600; }
+.star-name sup { font-family: var(--font-sans); font-size: .6875rem; color: #b46f7b; margin-left: 2px; vertical-align: super; }
+.atlas-compass { position: absolute; right: 16px; top: 14px; font-family: var(--font-serif); font-size: .8125rem; color: #a5838a; padding-top: 12px; }
+.atlas-compass::before { content: ""; position: absolute; left: 50%; top: 0; width: 1px; height: 10px; background: #c9a3a8; }
+.places-footnote { margin: 12px 0 0; }
+.place-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 6px; margin-bottom: 18px; }
+.place-chips::-webkit-scrollbar { display: none; }
+.place-chip { flex: 0 0 auto; min-height: 40px; padding: 7px 14px; border: 1px solid var(--line); background: transparent; color: #775e63; font-family: var(--font-serif); font-size: .9375rem; }
+.place-chip.is-active { background: #b46f7b; border-color: #b46f7b; color: #fff; }
+.place-order { display: block; margin-bottom: 6px; font-size: .875rem; color: #9a646e; letter-spacing: .03em; }
+@media (min-width: 1001px) { .atlas-aside { position: sticky; top: 24px; } }
+@media (max-width: 550px) {
+  .star-name { font-size: .875rem; }
+  .place-chips { margin-right: -20px; }
+}
+.star.is-below .star-name { left: 50%; right: auto; top: calc(50% + 14px); transform: translateX(-50%); }
+@media (min-width: 801px) { .place-chips { flex-wrap: wrap; overflow: visible; } }

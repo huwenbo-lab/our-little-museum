@@ -107,10 +107,11 @@
 
   function foyer() {
     const counts = { timeline: `${data.timeline.length} 段回忆`, places: `${data.places.length} 个地点`, letter: data.letter?.pending ? '一封待写的信' : '1 封信' };
-    const roomTiles = rooms.slice(1).map(room => `<button type="button" class="room-tile" data-room="${room.id}" aria-label="进入${e(room.title)}">
-      ${img(room.image, `展厅 ${room.number} 的示意画面`)}
+    const covers = data.roomCovers || {};
+    const roomTiles = rooms.slice(1).map(room => { const cover = covers[room.id]; const c = typeof cover === 'string' ? { src: cover } : cover; return `<button type="button" class="room-tile ${c ? 'has-photo' : ''}" data-room="${room.id}" aria-label="进入${e(room.title)}">
+      ${c ? img(c.src, '', 'room-photo', c.position ? `style="object-position:${e(c.position)}"` : '', true) : img(room.image, `展厅 ${room.number} 的示意画面`)}
       <span class="tile-content"><h3>${e(room.title)}</h3><span class="tile-count">${e(counts[room.id])}</span></span>
-    </button>`).join('');
+    </button>`; }).join('');
     const days = knownDays ? `<span>相识第 <strong>${knownDays}</strong> 天 · 展览仍在更新</span>` : '';
     return `<section class="scene foyer-scene"><div class="room-content"><img src="assets/peony-botanical.svg" alt="" class="foyer-peony" aria-hidden="true"/>
       <div class="foyer-top"><div><h1 class="display-title">我们的故事</h1><p class="foyer-top-note">${e(data.foyerNote)}</p></div></div>
@@ -120,10 +121,15 @@
   }
 
   /* 故事先读，图片直接展开。尺寸来自图片本身，长截图不裁切也不嵌套滚动。 */
-  function memoryGallery(item) {
+  const CHAT_VISIBLE = 2;
+  function memoryGallery(item, opts = {}) {
     const { list } = mediaOf(item);
     const conversation = list.every(m => m.type === 'chat');
-    const figure = list.map((m, i) => {
+    const chats = list.map((m, i) => ({ m, i })).filter(x => x.m.type === 'chat');
+    const keyed = chats.filter(x => x.m.key);
+    const shownChats = new Set((keyed.length ? keyed : chats.slice(0, CHAT_VISIBLE)).map(x => x.i));
+    const folded = opts.foldChats && chats.length > CHAT_VISIBLE ? new Set(chats.filter(x => !shownChats.has(x.i)).map(x => x.i)) : new Set();
+    const render = (m, i) => {
       const alt = m.alt || m.caption || item.title || item.name || '回忆照片';
       const size = (back = false) => {
         const w = Number(back ? m.backWidth : m.width), h = Number(back ? m.backHeight : m.height);
@@ -137,8 +143,10 @@
       const caption = m.caption && (m.showCaption || /合页|共用/.test(m.caption)) ? `<figcaption class="memory-caption">${e(m.caption)}</figcaption>` : '';
       const portrait = Number(m.height) > Number(m.width) ? ' is-portrait' : '';
       return `<figure class="memory-figure is-${e(m.type)}${portrait}">${image}${caption}</figure>`;
-    }).join('');
-    return `<div class="memory-gallery ${conversation ? 'is-conversation' : ''} ${list.length === 1 ? 'is-single' : ''}" aria-label="${e(item.title || item.name)}的照片">${figure}</div>`;
+    };
+    const figure = list.map((m, i) => folded.has(i) ? '' : render(m, i)).join('');
+    const more = folded.size ? `<details class="more-chats"><summary>还有 ${folded.size} 张聊天记录</summary><div class="memory-gallery is-conversation">${list.map((m, i) => folded.has(i) ? render(m, i) : '').join('')}</div></details>` : '';
+    return `<div class="memory-gallery ${conversation ? 'is-conversation' : ''} ${list.length === 1 ? 'is-single' : ''}" aria-label="${e(item.title || item.name)}的照片">${figure}</div>${more}`;
   }
 
   function chapterOf(item) { return data.chapters.find(c => c.id === item.chapter) || null; }
@@ -163,27 +171,96 @@
       <div class="timeline-track" role="group" aria-label="选择时间线事件">${track}</div>
       <article class="timeline-exhibit reading-exhibit">
         <header class="event-content event-reading-head" aria-live="polite"><div class="event-date">${e(item.date)}</div><h2 class="event-title">${e(item.title)}</h2>${item.short ? `<p class="event-short">${e(item.short)}</p>` : ''}<p class="event-story">${e(item.story)}</p>${quote}${placeLink}${eventNavigation()}</header>
-        ${memoryGallery(item)}
+        ${memoryGallery(item, { foldChats: true })}
         ${eventNavigation(true)}
       </article>
     </div></section>`;
   }
 
+  /* 足迹星图的布局：
+   * 1. 有 lat/lng 的地点按大致方位投影（只保留相对位置，不按比例）；没有的用 x/y；
+   * 2. 太近的光点互相推开（南昌、华林、吴城这类邻近地点不会叠在一起）；
+   * 3. 按“第一次一起留下回忆”的先后排序，连成一条星座线，左右键和地点条也按这个顺序。 */
+  function placeLayout() {
+    const hasGeo = p => p.lat !== null && p.lat !== undefined && p.lng !== null && p.lng !== undefined && Number.isFinite(+p.lat) && Number.isFinite(+p.lng);
+    const firstVisit = p => { const idx = (p.events || []).map(id => data.timeline.findIndex(ev => ev.id === id)).filter(i => i >= 0); return idx.length ? Math.min(...idx) : Infinity; };
+    const order = data.places.map((p, i) => ({ i, t: firstVisit(p) })).sort((a, b) => a.t - b.t || a.i - b.i).map(x => x.i);
+    const geo = data.places.filter(hasGeo);
+    let pos;
+    if (geo.length >= 2) {
+      // 先按经纬度得到相对方位，再从中心向外做一次“开方”拉伸：中部密集的城市被撑开，边远城市收回来
+      const k = Math.cos(34 * Math.PI / 180);
+      const raw = data.places.map(p => hasGeo(p) ? { x: +p.lng * k, y: -p.lat } : null);
+      const known = raw.filter(Boolean);
+      const cx = known.reduce((s, p) => s + p.x, 0) / known.length, cy = known.reduce((s, p) => s + p.y, 0) / known.length;
+      const spread = raw.map(p => { if (!p) return null; const dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1e-6, f = Math.pow(d, .55) / d; return { x: dx * f, y: dy * f }; });
+      const sx = spread.filter(Boolean).map(p => p.x), sy = spread.filter(Boolean).map(p => p.y);
+      const minX = Math.min(...sx), maxX = Math.max(...sx), minY = Math.min(...sy), maxY = Math.max(...sy);
+      const span = Math.max(maxX - minX, maxY - minY) || 1, pad = 12, size = 100 - pad * 2;
+      const offX = (size - (maxX - minX) / span * size) / 2, offY = (size - (maxY - minY) / span * size) / 2;
+      pos = data.places.map((p, i) => spread[i]
+        ? { x: pad + offX + (spread[i].x - minX) / span * size, y: pad + offY + (spread[i].y - minY) / span * size }
+        : { x: Number(p.x) || 50, y: Number(p.y) || 50 });
+    } else {
+      pos = data.places.map(p => ({ x: Number(p.x) || 50, y: Number(p.y) || 50 }));
+    }
+    const MIN = 17;
+    for (let step = 0; step < 200; step++) {
+      let moved = false;
+      for (let a = 0; a < pos.length; a++) for (let b = a + 1; b < pos.length; b++) {
+        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y, d = Math.hypot(dx, dy);
+        if (d < MIN) {
+          const ux = d ? dx / d : .8, uy = d ? dy / d : .6, push = (MIN - d) / 2;
+          pos[a].x -= ux * push; pos[a].y -= uy * push; pos[b].x += ux * push; pos[b].y += uy * push; moved = true;
+        }
+      }
+      pos.forEach(p => { p.x = Math.max(8, Math.min(92, p.x)); p.y = Math.max(8, Math.min(90, p.y)); });
+      if (!moved) break;
+    }
+    // 地名默认写在光点右边；右边放不下（靠边或会压到别的光点）就写在左边
+    pos.forEach((p, i) => {
+      // 按手机宽度（地图约 335px）估算标签宽度：光点间距 + 内边距 + 每个字约 4.6% + “×N” + 余量
+      const w = 10 + String(data.places[i].short || data.places[i].name).length * 4.6 + ((data.places[i].events || []).length > 1 ? 4.6 : 0);
+      const blocks = side => pos.some((q, j) => j !== i && Math.abs(q.y - p.y) < 8 && (side > 0 ? q.x > p.x && q.x < p.x + w + 3 : q.x < p.x && q.x > p.x - w - 3));
+      const rightOk = p.x + w <= 96 && !blocks(1), leftOk = p.x - w >= 4 && !blocks(-1);
+      p.side = rightOk ? '' : leftOk ? 'is-left' : 'is-below';
+    });
+    return { order, pos };
+  }
+
   function places() {
     const place = data.places[state.placeIndex] || data.places[0];
     if (!place) return '<section class="scene"><div class="room-content"><h1 class="display-title">还没有地点展品</h1></div></section>';
-    const path = data.places.slice(1).map((p, i) => { const prev = data.places[i]; const x1 = Number(prev.x) || 20, x2 = Number(p.x) || 70, y1 = Number(prev.y) || 50, y2 = Number(p.y) || 50; return `<path d="M ${x1} ${y1} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 18} ${x2} ${y2}"/>`; }).join('');
-    const markers = data.places.map((p, i) => { const visits = Array.isArray(p.events) ? p.events.length : 0; return `<button type="button" class="atlas-marker ${i === state.placeIndex ? 'is-active' : ''}" data-action="select-place" data-index="${i}" style="left:${Math.max(6, Math.min(94, Number(p.x) || 50))}%;top:${Math.max(6, Math.min(94, Number(p.y) || 50))}%" aria-label="查看${e(p.name)}" aria-pressed="${i === state.placeIndex}">${e(p.no || pad2(i + 1))}${visits > 1 ? `<span class="visit-count" aria-hidden="true">×${visits}</span>` : ''}<span class="marker-name" aria-hidden="true">${e(p.short || p.name)}</span></button>`; }).join('');
-    const pagers = data.places.map((p, i) => `<button type="button" data-action="select-place" data-index="${i}" aria-label="查看地点：${e(p.name)}" class="${i === state.placeIndex ? 'is-active' : ''}">${i + 1}</button>`).join('');
-    const linked = (Array.isArray(place.events) ? place.events : []).map(id => ({ id, i: data.timeline.findIndex(ev => ev.id === id) })).filter(x => x.i >= 0);
-    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">在这里发生过 · ${linked.length} 段回忆</span>${linked.map(({ i }) => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}</button>`).join('')}</div>` : '';
+    const { order, pos } = placeLayout();
+    const stop = order.indexOf(state.placeIndex) + 1;
+    // 星座线：按第一次去的先后两两相连；和当前地点相连的两段（从哪里来、下一站去哪）加深
+    const stops = order.filter(i => (data.places[i].events || []).length);
+    const route = stops.slice(1).map((to, n) => { const from = stops[n]; const near = from === state.placeIndex || to === state.placeIndex; return `<line x1="${pos[from].x.toFixed(2)}" y1="${pos[from].y.toFixed(2)}" x2="${pos[to].x.toFixed(2)}" y2="${pos[to].y.toFixed(2)}" class="${near ? 'is-near' : ''}"/>`; }).join('');
+    const markers = data.places.map((p, i) => {
+      const visits = Array.isArray(p.events) ? p.events.length : 0;
+      return `<button type="button" class="star ${pos[i].side} ${i === state.placeIndex ? 'is-active' : ''}" data-action="select-place" data-index="${i}" style="left:${pos[i].x.toFixed(2)}%;top:${pos[i].y.toFixed(2)}%" aria-label="${e(p.name)}${visits ? `，${visits} 段回忆` : ''}" aria-pressed="${i === state.placeIndex}"><span class="star-dot" aria-hidden="true"></span><span class="star-name" aria-hidden="true">${e(p.short || p.name)}${visits > 1 ? `<sup>×${visits}</sup>` : ''}</span></button>`;
+    }).join('');
+    const chips = order.map(i => `<button type="button" class="place-chip ${i === state.placeIndex ? 'is-active' : ''}" data-action="select-place" data-index="${i}" aria-pressed="${i === state.placeIndex}">${e(data.places[i].short || data.places[i].name)}</button>`).join('');
+    const linked = (Array.isArray(place.events) ? place.events : []).map(id => data.timeline.findIndex(ev => ev.id === id)).filter(i => i >= 0);
+    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">在这里发生过 · ${linked.length} 段回忆</span>${linked.map(i => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}</button>`).join('')}</div>` : '';
+    const since = linked.length ? ` · ${e(data.timeline[linked[0]].date)}` : '';
     return `<section class="scene places-scene"><div class="room-content">
       <div class="section-head"><h1 class="display-title">足迹展厅</h1></div>
       <div class="atlas-layout">
-        <div class="atlas-map" role="group" aria-label="可点击的回忆地点示意图"><div class="atlas-sun"></div><svg class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${path}</svg>${markers}</div>
-        <article class="place-detail"><div class="place-copy"><h3>${e(place.name)}</h3>${place.caption ? `<p class="place-caption">${e(place.caption)}</p>` : ''}<p>${e(place.description)}</p>${visits}<div class="place-pagers">${pagers}</div></div>${memoryGallery(place)}</article>
+        <div class="atlas-aside">
+          <div class="atlas-map star-map" role="group" aria-label="我们去过的地方">
+            <svg class="atlas-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${route}</svg>
+            ${markers}
+            <span class="atlas-compass" aria-hidden="true">北</span>
+          </div>
+          <p class="places-footnote">光点按大致方位摆放，不按比例。连线按我们第一次在各地留下回忆的先后，深色的两段是这一站的来处和下一站。</p>
+        </div>
+        <article class="place-detail">
+          <div class="place-chips" role="group" aria-label="选择地点">${chips}</div>
+          <div class="place-copy"><span class="place-order">第 ${stop} 站${since}</span><h3>${e(place.name)}</h3>${place.caption ? `<p class="place-caption">${e(place.caption)}</p>` : ''}<p>${e(place.description)}</p>${visits}</div>
+          ${memoryGallery(place)}
+        </article>
       </div>
-      <p class="places-footnote">这是一张「回忆星图」：光点的位置按心意摆放，不代表真实的地理方位。</p>
     </div></section>`;
   }
 
@@ -223,7 +300,7 @@
     keepActiveNodeVisible();
   }
   function keepActiveNodeVisible() {
-    root.querySelectorAll('.timeline-track .is-active, .chapter-tabs .is-active').forEach(el => {
+    root.querySelectorAll('.timeline-track .is-active, .chapter-tabs .is-active, .place-chips .is-active').forEach(el => {
       const track = el.parentElement;
       const left = el.offsetLeft - (track.clientWidth - el.offsetWidth) / 2;
       track.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
@@ -261,7 +338,7 @@
     // 手机上地图和详情是上下排列：点了光点后把详情卡带进视野
     if (reveal && window.innerWidth <= 800) {
       const copy = root.querySelector('.place-copy');
-      if (copy && copy.getBoundingClientRect().top > window.innerHeight * 0.7) window.scrollTo({ top: window.scrollY + root.querySelector('.place-detail').getBoundingClientRect().top - 90, behavior: reduceMotion ? 'auto' : 'smooth' });
+      if (copy && copy.getBoundingClientRect().top > window.innerHeight * 0.7) window.scrollTo({ top: window.scrollY + root.querySelector('.place-chips').getBoundingClientRect().top - 90, behavior: reduceMotion ? 'auto' : 'smooth' });
     }
   }
 
@@ -385,7 +462,7 @@
       case 'next-event': switchEvent(state.timelineIndex + 1, true); break;
       case 'prev-event': switchEvent(state.timelineIndex - 1, true); break;
       case 'story-top': root.querySelector('.event-reading-head')?.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); break;
-      case 'select-place': switchPlace(index, actionNode.classList.contains('atlas-marker')); break;
+      case 'select-place': switchPlace(index, actionNode.classList.contains('star')); break;
       case 'goto-event': state.timelineIndex = index; navigate('timeline'); break;
       case 'goto-place': state.placeIndex = index; navigate('places'); break;
       case 'place-gallery':
@@ -423,8 +500,9 @@
       if (event.key === 'ArrowLeft') { switchEvent(state.timelineIndex - 1, true); event.preventDefault(); }
     }
     if (state.room === 'places') {
-      if (event.key === 'ArrowRight') { switchPlace(state.placeIndex + 1); event.preventDefault(); }
-      if (event.key === 'ArrowLeft') { switchPlace(state.placeIndex - 1); event.preventDefault(); }
+      const { order } = placeLayout(); const at = order.indexOf(state.placeIndex);
+      if (event.key === 'ArrowRight') { switchPlace(order[(at + 1) % order.length]); event.preventDefault(); }
+      if (event.key === 'ArrowLeft') { switchPlace(order[(at - 1 + order.length) % order.length]); event.preventDefault(); }
     }
   });
   function trapFocus(event, container) {
