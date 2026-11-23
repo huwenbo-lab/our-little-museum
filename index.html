@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#faf7f3" />
+  <meta name="description" content="一座为你而建的私人博物馆，收藏关于我们的故事。" />
+  <title>Our Little Museum · 我们的爱情博物馆</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="light-theme.css" />
+  <link rel="stylesheet" href="peony-theme.css" />
+  <script defer src="content.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="noise-overlay" aria-hidden="true"></div>
+  <div class="ambient-light" aria-hidden="true"></div>
+  <div class="app-shell" id="app">
+    <header class="topbar">
+      <button class="brand" type="button" data-action="home" aria-label="返回博物馆入口">
+        <span class="brand-mark peony-brand" aria-hidden="true">❀</span>
+        <span class="brand-copy"><strong>OUR LITTLE MUSEUM</strong><small>PEONY COLLECTION · 001</small></span>
+      </button>
+      <div class="topbar-actions">
+        <span class="demo-indicator" id="demo-indicator">DEMO · 等待你的故事</span>
+        <button class="icon-button ambience-button" id="ambience-button" data-action="toggle-ambience" type="button" aria-pressed="false" title="开启/关闭氛围声"><span aria-hidden="true">♫</span><span class="button-label">氛围声</span></button>
+        <button class="icon-button map-button" id="map-button" data-action="toggle-map" type="button" aria-label="打开展厅目录" aria-expanded="false"><span aria-hidden="true">☷</span><span class="button-label">展厅目录</span></button>
+      </div>
+    </header>
+
+    <main id="scene-root" tabindex="-1">
+      <div class="nojs-fallback">
+        <div class="fallback-emblem">✧</div>
+        <h1>Our Little Museum</h1>
+        <p>一座为你而建的私人博物馆。</p>
+        <p>如果页面停留在这里，请检查浏览器是否允许 JavaScript。</p>
+      </div>
+    </main>
+
+    <nav class="tourbar" id="tourbar" aria-label="参观进度" hidden></nav>
+    <footer class="site-foot"><span>MADE WITH CARE, NOT JUST CODE</span><span>OUR STORY IS STILL UNFOLDING · ❀</span></footer>
+  </div>
+
+  <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+  <aside class="room-drawer" id="room-drawer" aria-label="展厅目录" aria-hidden="true">
+    <div class="drawer-heading"><div><span class="eyebrow">MUSEUM DIRECTORY</span><h2>展厅目录</h2></div><button type="button" class="icon-button" data-action="close-map" aria-label="关闭目录">✕</button></div>
+    <div id="drawer-room-list" class="drawer-room-list"></div>
+    <p class="drawer-note">这里没有参观期限。你可以随时回来，慢慢看。</p>
+  </aside>
+
+  <div class="modal-backdrop" id="exhibit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="exhibit-modal">
+      <button class="modal-close" type="button" data-action="close-modal" aria-label="关闭展品">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+</body>
+</html>

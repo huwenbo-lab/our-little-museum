@@ -1,0 +1,65 @@
+/* PEONY EDITION: airy cream, champagne, watercolor pink. */
+:root { --night:#fffaf6; --night2:#f9f0e9; --ink:#493739; --sub:#8d7272;
+ --gold:#b67c7b; --gold-soft:#bb8d7a; --hair:rgba(180,128,115,.24);
+ --pane:rgba(255,255,255,.75); }
+html,body { background:#fffaf6;color:#493739; }
+.topbar { background:rgba(255,251,247,.93); backdrop-filter:blur(14px); }
+.brand-copy strong { letter-spacing:.14em; }
+.peony-brand {width:35px;height:35px;background:url('assets/peony-emblem.svg') center/contain no-repeat;font-size:0!important;flex-shrink:0}
+.entry-scene { background:radial-gradient(ellipse 46% 55% at 72% 41%,rgba(244,202,191,.45),transparent 80%),radial-gradient(ellipse 58% 55% at 7% 90%,rgba(236,217,196,.36),transparent 80%),linear-gradient(115deg,#fffcf8 10%,#fcf4ee 59%,#f5e9e4 100%); }
+.entry-stars{opacity:.25;}
+.entry-copy h1 { color:#4a343b; }
+.entry-english {color:#b28780;}
+.entry-line {color:#825c62;}
+.entry-note {color:#977f7a;}
+.overline-row,.entry-footnote {color:#b17e80;}
+.portal-outer { background:linear-gradient(122deg,#f2dfd4 0%,#fffcf6 22%,#f2d8cc 100%);box-shadow:0 14px 60px rgba(166,112,98,.10),0 0 0 14px rgba(226,190,173,.075),inset 0 0 40px #fff8ed; }
+.portal-inner { background:radial-gradient(ellipse at 55% 47%,#fff9f1 8%,#f5e4d9 68%,#e9c9bd 100%); }
+.portal-inner:after{opacity:.29;}
+.portal-moon {opacity:.23;}
+.portal-botanical {position:absolute;z-index:2; width:116%;height:112%;left:-7%;top:-7%;object-fit:contain;filter:drop-shadow(0 13px 11px rgba(142,83,82,.095));animation:peony-float 9s ease-in-out infinite alternate;pointer-events:none;}
+.portal-float {top:85%;width:94%;font-size:9px;letter-spacing:.21em;color:#a06a76;text-shadow:0 1px 9px #fff8f3;z-index:3;}
+.portal-float span {font-size:23px;letter-spacing:.16em;margin-bottom:10px;color:#916473;}
+.portal-ornament {z-index:4;top:-4%;left:calc(50% - 23px);width:46px;opacity:.8;}
+.portal-ornament img {width:100%;}
+@keyframes peony-float {0%{transform:translateY(0) rotate(-1deg)}100%{transform:translateY(-9px) rotate(1deg)}}
+.entry-copy .primary-button {border-radius:3px;letter-spacing:.16em;}
+.foyer-scene {background:radial-gradient(ellipse 55% 66% at 94% 32%,rgba(238,201,190,.18),transparent 84%),#fffaf6;overflow:hidden;}
+.foyer-scene .room-content{position:relative;}
+.foyer-peony {position:absolute;right:-154px;top:-230px;width:450px;height:570px;pointer-events:none;opacity:.15;transform:rotate(12deg);filter:saturate(.75);}
+.foyer-top,.room-grid,.foyer-floor {position:relative;z-index:1;}
+.room-grid {grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;}
+.room-tile {height:370px;border-radius:3px;}
+.room-tile img {filter:saturate(.89);}
+.room-tile:hover {transform:translateY(-5px);}
+.tile-number {color:#9e6f76;}
+.tile-content h3 {color:#4f383c;}
+.tile-content p{color:#927d76;}
+.foyer-quote {color:#9e7c77;}
+.timeline-scene,.places-scene{background:radial-gradient(ellipse 75% 60% at 94% 7%,rgba(244,219,207,.17),transparent 88%),#fffaf6;}
+.timeline-exhibit .photo-mat{border-radius:2px;}
+.timeline-node.is-active{color:#ad7580;}
+.letter-scene{background:radial-gradient(ellipse 50% 65% at 50% 32%,rgba(241,208,196,.37),transparent 85%),#fffaf6;overflow:hidden;}
+.letter-layout{position:relative;}
+.letter-peony {position:absolute;z-index:0;width:365px;right:-200px;top:0;opacity:.19;pointer-events:none;transform:rotate(16deg);}
+.letter-layout>*:not(.letter-peony):not(.letter-petal){position:relative;z-index:1;}
+.wax-seal {font-size:30px;}
+.letter-paper {border-radius:2px;}
+.site-foot{background:#fff9f4;}
+@media(max-width:1120px){.room-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.room-tile{height:300px}}
+@media(max-width:800px){.entry-art{height:345px;width:min(80%,355px)}.portal-botanical{width:120%;height:115%;left:-10%;top:-9%}.room-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.room-tile{height:260px}.tile-content h3{font-size:17px}.letter-peony{right:-160px;width:290px;}}
+@media(max-width:550px){.entry-layout{padding-top:16px}.entry-art{width:min(87%,290px);height:315px}.portal-float span{font-size:17px;margin-bottom:7px}.portal-float{font-size:7px;top:82%}.portal-ornament{top:-7%;width:36px;left:calc(50% - 18px)}.entry-copy h1{font-size:34px}.entry-english{font-size:13px}.entry-note{font-size:12px}.room-grid{grid-template-columns:1fr;gap:14px}.room-tile{height:185px}.room-tile img{object-position:center 48%}.tile-content{bottom:14px;left:20px;right:18px}.tile-content h3{font-size:20px;margin:5px 0}.tile-content p{font-size:11px}.tile-number{top:12px;left:20px}.foyer-peony{right:-120px;top:-145px;width:270px;height:360px}.letter-peony{width:230px;right:-135px;top:40px}.entry-copy{padding-bottom:20px}}
+/* Improve legibility while keeping the warm, pale palette. */
+.display-title,.letter-title,.event-title{color:#554044}
+.foyer-top-note,.section-head p,.event-story,.place-copy p{color:#6c5a59}
+.foyer-quote,.letter-instruction,.letter-after{color:#896c69}
+.room-tile img{opacity:1;filter:contrast(1.09) saturate(.85)}
+.room-tile:after{background:linear-gradient(180deg,rgba(255,248,244,.05) 0%,rgba(255,248,244,.12) 28%,rgba(255,249,243,.90) 76%,rgba(255,250,246,.98) 100%)}
+.tile-number,.tile-content .small-caps{color:#96656c}
+.tile-content h3{color:#49373a}
+.tile-content p{color:#6e5d5e}
+.timeline-node{color:#796369}
+.timeline-node.is-active{color:#995a64}
+.letter-paper p,.letter-paper h3{color:#554447}
+.letter-paper .paper-head{color:#96716f}
+@media(prefers-reduced-motion:reduce){.portal-botanical{animation:none}}
