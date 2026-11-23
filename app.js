@@ -45,7 +45,7 @@
     { id: 'places', title: '足迹展厅', en: 'PLACES WE KEEP', number: '02', image: 'assets/place-city.svg', description: '把去过的地方，变成共同记忆' },
     { id: 'letter', title: '终厅 · 一封信', en: 'THE LAST ROOM', number: '03', image: 'assets/room-letter.svg', description: '在参观的最后，有些话想对你说' }
   ];
-  const state = { room: 'intro', timelineIndex: 0, photoIndex: 0, placeIndex: 0, letterOpened: false, drawerOpen: false, modalOpen: false, soundOn: false, soundNodes: null, gallery: null };
+  const state = { room: 'intro', timelineIndex: 0, placeIndex: 0, letterOpened: false, drawerOpen: false, modalOpen: false, soundOn: false, soundNodes: null, gallery: null };
   let toastTimer;
   let letterTimer;
   let lastFocus = null;
@@ -92,96 +92,79 @@
       <div class="entry-stars" aria-hidden="true"></div>
       <div class="entry-layout">
         <div class="entry-copy">
-          <div class="overline-row">AN EXHIBITION FOR ONE SPECIAL PERSON</div>
           <h1>${e(data.title)}</h1>
-          <div class="entry-english">${e(data.englishTitle)}</div>
           <p class="entry-line">${e(data.openingLine)}</p>
           <p class="entry-note">${e(data.openingNote)}</p>
           ${dayLine}
-          <button type="button" class="primary-button" data-room="foyer">${e(data.entryButton)} <span class="arrow" aria-hidden="true">↗</span></button>
-          <div class="entry-footnote">PRIVATE EXHIBITION · ADMISSION FOR TWO</div>
+          <button type="button" class="primary-button" data-room="foyer">${e(data.entryButton)}</button>
         </div>
-        <div class="entry-art" aria-hidden="true"><div class="portal-glow"></div><div class="portal-outer"><div class="portal-inner"><div class="portal-center-light"></div><div class="portal-moon"></div><img class="portal-botanical" src="assets/peony-botanical.svg" alt="" /></div></div><div class="portal-ornament"><img src="assets/peony-emblem.svg" alt="" /></div><div class="portal-float"><span>为 你 盛 开</span>PEONY EDITION · FOR YOU</div><div class="portal-plinth"></div></div>
+        <div class="entry-art" aria-hidden="true"><div class="portal-glow"></div><div class="portal-outer"><div class="portal-inner"><div class="portal-center-light"></div><div class="portal-moon"></div><img class="portal-botanical" src="assets/peony-botanical.svg" alt="" /></div></div><div class="portal-ornament"><img src="assets/peony-emblem.svg" alt="" /></div><div class="portal-float"><span>为 你 盛 开</span></div><div class="portal-plinth"></div></div>
       </div>
-      <div class="entry-scroll">${e(data.recipient)} · ${e(data.founded)}</div><span class="entry-vertical">A VERY SMALL MUSEUM, A VERY BIG STORY</span>
+      <div class="entry-scroll">${e(data.recipient)}</div>
     </section>`;
   }
 
   function foyer() {
-    const counts = { timeline: `${data.timeline.length} 件时间展品`, places: `${data.places.length} 个地点`, letter: data.letter?.pending ? '一封待写的信' : '1 封信' };
+    const counts = { timeline: `${data.timeline.length} 段回忆`, places: `${data.places.length} 个地点`, letter: data.letter?.pending ? '一封待写的信' : '1 封信' };
     const roomTiles = rooms.slice(1).map(room => `<button type="button" class="room-tile" data-room="${room.id}" aria-label="进入${e(room.title)}">
       ${img(room.image, `展厅 ${room.number} 的示意画面`)}
-      <span class="tile-number">GALLERY ${room.number} / 03</span>
-      <span class="tile-content"><span class="small-caps">${e(room.en)}</span><h3>${e(room.title)}</h3><p>${e(room.description)}</p><span class="tile-count">${e(counts[room.id])}</span><span class="tile-arrow" aria-hidden="true">↗</span></span>
+      <span class="tile-content"><h3>${e(room.title)}</h3><span class="tile-count">${e(counts[room.id])}</span></span>
     </button>`).join('');
-    const days = knownDays ? `<span>相识第 <strong>${knownDays}</strong> 天 · 展览仍在更新</span>` : '<span>THREE GALLERIES · COUNTLESS MEMORIES</span>';
+    const days = knownDays ? `<span>相识第 <strong>${knownDays}</strong> 天 · 展览仍在更新</span>` : '';
     return `<section class="scene foyer-scene"><div class="room-content"><img src="assets/peony-botanical.svg" alt="" class="foyer-peony" aria-hidden="true"/>
-      <div class="foyer-top"><div><span class="eyebrow">WELCOME TO THE GRAND FOYER · 00</span><h1 class="display-title">从这里，走进<br>关于我们的故事。</h1><div class="title-rule"></div><p class="foyer-top-note">${e(data.foyerNote)}</p></div><div class="foyer-quote">“ 时间会往前走，<br>　但有些瞬间可以被永远珍藏。 ”</div></div>
+      <div class="foyer-top"><div><h1 class="display-title">我们的故事</h1><p class="foyer-top-note">${e(data.foyerNote)}</p></div></div>
       <div class="room-grid">${roomTiles}</div>
-      <div class="foyer-floor">${days}<span>CURATED BY <strong>${e(data.curatorSignature)}</strong></span></div>
+      <div class="foyer-floor">${days}<span>${e(data.curatorSignature)}</span></div>
     </div></section>`;
   }
 
-  /* 单件媒体的展示：照片（模糊底 + 完整显示）、聊天截图（手机框）、拍立得（可翻面） */
-  function mediaStage(m, item) {
-    const alt = m.alt || m.caption || item.title || '';
-    const open = `data-action="lightbox" aria-label="放大观看：${e(alt)}"`;
-    if (m.type === 'chat') {
-      return `<div class="media-stage is-chat"><button type="button" class="chat-phone" ${open}>${img(m.src, alt, 'chat-shot', '', true)}<span class="chat-hint">点开看完整聊天</span></button></div>`;
-    }
-    if (m.type === 'polaroid') {
-      const back = m.back ? `<span class="polaroid-face polaroid-back">${img(m.back, `${alt}（背面）`)}</span>` : '';
-      const ratio = m.ratio ? `style="--ratio:${e(m.ratio)}"` : '';
-      return `<div class="media-stage is-polaroid"><div class="polaroid ${m.back ? 'has-back' : ''}" ${ratio}><button type="button" class="polaroid-inner" ${open}><span class="polaroid-face polaroid-front">${img(m.src, alt)}</span>${back}</button></div>${m.back ? '<button type="button" class="flip-button" data-action="flip-polaroid">翻到背面看看 ↻</button>' : ''}</div>`;
-    }
-    if (m.type === 'placeholder') {
-      return `<div class="media-stage is-placeholder"><button type="button" class="photo-button" ${open}>${img(m.src, alt, 'exhibit-cover')}</button></div>`;
-    }
-    const fit = m.fit === 'cover' ? 'is-cover' : '';
-    const pos = m.position ? `style="object-position:${e(m.position)}"` : '';
-    return `<div class="media-stage is-photo ${fit}" style="--bg:url('${e(validImage(m.src))}')"><button type="button" class="photo-button" ${open}>${img(m.src, alt, 'exhibit-photo', pos, true)}</button></div>`;
-  }
-
-  function filmstrip(list, active) {
-    if (list.length < 2) return '';
-    return `<div class="filmstrip" role="group" aria-label="这件展品的全部照片">${list.map((m, i) => `<button type="button" class="film-thumb ${i === active ? 'is-active' : ''} ${m.type === 'chat' ? 'is-chat' : ''}" data-action="select-photo" data-index="${i}" aria-label="第 ${i + 1} 张" aria-current="${i === active}">${img(m.src, '', '')}</button>`).join('')}</div>`;
+  /* 故事先读，图片直接展开。尺寸来自图片本身，长截图不裁切也不嵌套滚动。 */
+  function memoryGallery(item) {
+    const { list } = mediaOf(item);
+    const conversation = list.every(m => m.type === 'chat');
+    const figure = list.map((m, i) => {
+      const alt = m.alt || m.caption || item.title || item.name || '回忆照片';
+      const size = (back = false) => {
+        const w = Number(back ? m.backWidth : m.width), h = Number(back ? m.backHeight : m.height);
+        return w > 0 && h > 0 ? `width="${w}" height="${h}"` : '';
+      };
+      const button = (back = false) => `<button type="button" class="memory-image-button" data-action="lightbox" data-index="${i}" data-side="${back ? 'back' : 'front'}" aria-label="放大观看：${e(alt)}${back ? '（背面）' : ''}">${img(back ? m.back : m.src, back ? `${alt}（背面）` : alt, 'memory-image', size(back), i === 0)}</button>`;
+      const image = m.type === 'polaroid' && m.back
+        ? `<div class="memory-pair"><div class="memory-side">${button()}<span class="memory-side-label">正面</span></div><div class="memory-side">${button(true)}<span class="memory-side-label">背面的字</span></div></div>`
+        : button();
+      // 归档标题仍用于图片的无障碍说明；只在画面下保留理解图片所需的说明。
+      const caption = m.caption && (m.showCaption || /合页|共用/.test(m.caption)) ? `<figcaption class="memory-caption">${e(m.caption)}</figcaption>` : '';
+      const portrait = Number(m.height) > Number(m.width) ? ' is-portrait' : '';
+      return `<figure class="memory-figure is-${e(m.type)}${portrait}">${image}${caption}</figure>`;
+    }).join('');
+    return `<div class="memory-gallery ${conversation ? 'is-conversation' : ''} ${list.length === 1 ? 'is-single' : ''}" aria-label="${e(item.title || item.name)}的照片">${figure}</div>`;
   }
 
   function chapterOf(item) { return data.chapters.find(c => c.id === item.chapter) || null; }
 
+  function eventNavigation(bottom = false) {
+    const isLast = state.timelineIndex === data.timeline.length - 1;
+    return `<nav class="event-nav ${bottom ? 'is-bottom' : ''}" aria-label="${bottom ? '照片后的回忆导航' : '这段故事的导航'}"><button type="button" class="outline-button" data-action="prev-event" ${state.timelineIndex === 0 ? 'disabled' : ''}>上一段</button>${isLast ? '<button type="button" class="outline-button" data-room="places">去足迹展厅</button>' : '<button type="button" class="outline-button" data-action="next-event">下一段</button>'}${bottom ? '<button type="button" class="text-button" data-action="story-top">回到这段故事</button>' : ''}</nav>`;
+  }
+
   function timeline() {
     const item = data.timeline[state.timelineIndex] || data.timeline[0];
     if (!item) return '<section class="scene"><div class="room-content"><h1 class="display-title">还没有时间线展品</h1></div></section>';
-    const { list, real } = mediaOf(item);
-    state.photoIndex = Math.min(state.photoIndex, list.length - 1);
-    const m = list[state.photoIndex];
     const chapter = chapterOf(item);
-    // 有章节时：只显示当前章节的节点，章节作为上方的“分馆”标签
     const visible = data.timeline.map((ev, i) => ({ ev, i })).filter(({ ev }) => !chapter || ev.chapter === chapter.id);
-    const chapterTabs = data.chapters.length ? `<div class="chapter-tabs" role="tablist" aria-label="选择篇章">${data.chapters.map((c, ci) => { const first = data.timeline.findIndex(ev => ev.chapter === c.id); return first < 0 ? '' : `<button type="button" role="tab" class="chapter-tab ${chapter && c.id === chapter.id ? 'is-active' : ''}" aria-selected="${chapter && c.id === chapter.id}" data-action="select-event" data-index="${first}"><small>${e(c.period || `CHAPTER ${pad2(ci + 1)}`)}</small><span>${e(c.title)}</span></button>`; }).join('')}</div>` : '';
+    const chapterTabs = data.chapters.length ? `<div class="chapter-tabs" role="tablist" aria-label="选择篇章">${data.chapters.map(c => { const first = data.timeline.findIndex(ev => ev.chapter === c.id); return first < 0 ? '' : `<button type="button" role="tab" class="chapter-tab ${chapter && c.id === chapter.id ? 'is-active' : ''}" aria-selected="${chapter && c.id === chapter.id}" data-action="select-event" data-index="${first}">${c.period ? `<small>${e(c.period)}</small>` : ''}<span>${e(c.title)}</span></button>`; }).join('')}</div>` : '';
     const track = visible.map(({ ev, i }) => `<button class="timeline-node ${i === state.timelineIndex ? 'is-active' : ''} ${ev.highlight ? 'is-highlight' : ''}" data-action="select-event" data-index="${i}" type="button" aria-current="${i === state.timelineIndex ? 'step' : 'false'}"><small>${e(ev.date)}</small><span>${e(ev.title)}</span></button>`).join('');
-    const badge = real ? (list.length > 1 ? `${state.photoIndex + 1} / ${list.length}` : 'ONE MOMENT') : 'IMAGE PLACEHOLDER · 可替换照片';
-    const arrows = list.length > 1 ? `<button type="button" class="mini-arrow" data-action="prev-photo" aria-label="上一张照片">←</button><button type="button" class="mini-arrow" data-action="next-photo" aria-label="下一张照片">→</button>` : '';
-    const caption = m.caption && m.caption !== item.title ? `<p class="media-caption">${e(m.caption)}</p>` : '';
-    const quote = item.quote ? `<blockquote class="event-quote">“${e(item.quote)}”</blockquote>` : '';
-    const placeLink = item.place ? (() => { const pi = data.places.findIndex(p => p.id === item.place); return pi < 0 ? '' : `<button type="button" class="text-button" data-action="goto-place" data-index="${pi}">⌖ ${e(data.places[pi].name)}</button>`; })() : '';
-    const total = data.timeline.length;
-    const isLast = state.timelineIndex === total - 1;
+    const quote = item.quote && !String(item.story || '').includes(item.quote) ? `<blockquote class="event-quote">“${e(item.quote)}”</blockquote>` : '';
+    const placeLink = item.place ? (() => { const pi = data.places.findIndex(p => p.id === item.place); return pi < 0 ? '' : `<button type="button" class="text-button event-place" data-action="goto-place" data-index="${pi}">${e(data.places[pi].name)}</button>`; })() : '';
     return `<section class="scene timeline-scene"><div class="room-content">
-      <div class="section-head"><div><span class="eyebrow">GALLERY 01 · CHRONICLES OF US</span><h1 class="display-title">时间长廊</h1></div><p>有些事情，过去很久也还记得。<br>选择一段时间，打开属于它的展柜。</p></div>
+      <div class="section-head"><h1 class="display-title">时间长廊</h1></div>
       ${chapterTabs}
-      ${chapter && chapter.intro ? `<p class="chapter-intro">${e(chapter.intro)}</p>` : ''}
       <div class="timeline-track" role="group" aria-label="选择时间线事件">${track}</div>
-      <div class="timeline-exhibit ${item.highlight ? 'is-highlight' : ''}" aria-live="polite">
-        <div class="photo-mat">
-          <div class="cover-frame" data-swipe="photo">${mediaStage(m, item)}<div class="photo-label"><i></i>${e(badge)}</div></div>
-          ${caption}
-          <div class="photo-counter"><span>ARCHIVE ${pad2(state.timelineIndex + 1)} / ${pad2(total)}</span><span class="spacer"></span>${arrows}</div>
-          ${filmstrip(list, state.photoIndex)}
-        </div>
-        <div class="event-content"><div class="event-num">${pad2(state.timelineIndex + 1)}</div><div class="event-date">${e(item.date)}${item.highlight ? ' · <span class="peony-day">❀ 重要的日子</span>' : ' · THE MEMORY COLLECTION'}</div><h2 class="event-title">${e(item.title)}</h2><span class="event-en">${e(item.subtitle)}</span><p class="event-short">${e(item.short)}</p><p class="event-story">${e(item.story)}</p>${quote}
-          <div class="exhibit-controls"><button type="button" class="outline-button" data-action="prev-event" ${state.timelineIndex === 0 ? 'disabled' : ''} aria-label="上一段回忆">←</button>${isLast ? '<button type="button" class="outline-button" data-room="places">去足迹展厅　→</button>' : '<button type="button" class="outline-button" data-action="next-event">下一段回忆　→</button>'}${placeLink}</div></div>
-      </div>
+      <article class="timeline-exhibit reading-exhibit">
+        <header class="event-content event-reading-head" aria-live="polite"><div class="event-date">${e(item.date)}</div><h2 class="event-title">${e(item.title)}</h2>${item.short ? `<p class="event-short">${e(item.short)}</p>` : ''}<p class="event-story">${e(item.story)}</p>${quote}${placeLink}${eventNavigation()}</header>
+        ${memoryGallery(item)}
+        ${eventNavigation(true)}
+      </article>
     </div></section>`;
   }
 
@@ -191,15 +174,13 @@
     const path = data.places.slice(1).map((p, i) => { const prev = data.places[i]; const x1 = Number(prev.x) || 20, x2 = Number(p.x) || 70, y1 = Number(prev.y) || 50, y2 = Number(p.y) || 50; return `<path d="M ${x1} ${y1} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 18} ${x2} ${y2}"/>`; }).join('');
     const markers = data.places.map((p, i) => { const visits = Array.isArray(p.events) ? p.events.length : 0; return `<button type="button" class="atlas-marker ${i === state.placeIndex ? 'is-active' : ''}" data-action="select-place" data-index="${i}" style="left:${Math.max(6, Math.min(94, Number(p.x) || 50))}%;top:${Math.max(6, Math.min(94, Number(p.y) || 50))}%" aria-label="查看${e(p.name)}" aria-pressed="${i === state.placeIndex}">${e(p.no || pad2(i + 1))}${visits > 1 ? `<span class="visit-count" aria-hidden="true">×${visits}</span>` : ''}<span class="marker-name" aria-hidden="true">${e(p.short || p.name)}</span></button>`; }).join('');
     const pagers = data.places.map((p, i) => `<button type="button" data-action="select-place" data-index="${i}" aria-label="查看地点：${e(p.name)}" class="${i === state.placeIndex ? 'is-active' : ''}">${i + 1}</button>`).join('');
-    const { list, real } = mediaOf(place);
-    const cover = list[0];
     const linked = (Array.isArray(place.events) ? place.events : []).map(id => ({ id, i: data.timeline.findIndex(ev => ev.id === id) })).filter(x => x.i >= 0);
-    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">在这里发生过 · ${linked.length} 段回忆</span>${linked.map(({ i }) => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}<span aria-hidden="true">↗</span></button>`).join('')}</div>` : '';
+    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">在这里发生过 · ${linked.length} 段回忆</span>${linked.map(({ i }) => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}</button>`).join('')}</div>` : '';
     return `<section class="scene places-scene"><div class="room-content">
-      <div class="section-head"><div><span class="eyebrow">GALLERY 02 · AN ATLAS OF MEMORIES</span><h1 class="display-title">足迹展厅</h1></div><p>有些地方，因为一起去过，<br>从此有了不同的意义。</p></div>
+      <div class="section-head"><h1 class="display-title">足迹展厅</h1></div>
       <div class="atlas-layout">
-        <div class="atlas-map" role="group" aria-label="可点击的回忆地点示意图"><div class="atlas-sun"></div><svg class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${path}</svg><div class="atlas-corner">COORDINATES OF MEMORY</div>${markers}</div>
-        <article class="place-detail"><button type="button" class="place-cover" data-action="place-gallery" aria-label="查看${e(place.name)}的照片">${img(cover.src, `地点：${place.name}`)}${real && list.length > 1 ? `<span class="place-count">${list.length} 张照片 ↗</span>` : ''}</button><div class="place-copy"><span class="eyebrow">LOCATION ${pad2(state.placeIndex + 1)} / ${pad2(data.places.length)}</span><h3>${e(place.name)}</h3><div class="event-en">${e(place.caption)}</div><p>${e(place.description)}</p>${visits}<div class="place-pagers">${pagers}</div></div></article>
+        <div class="atlas-map" role="group" aria-label="可点击的回忆地点示意图"><div class="atlas-sun"></div><svg class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${path}</svg>${markers}</div>
+        <article class="place-detail"><div class="place-copy"><h3>${e(place.name)}</h3>${place.caption ? `<p class="place-caption">${e(place.caption)}</p>` : ''}<p>${e(place.description)}</p>${visits}<div class="place-pagers">${pagers}</div></div>${memoryGallery(place)}</article>
       </div>
       <p class="places-footnote">这是一张「回忆星图」：光点的位置按心意摆放，不代表真实的地理方位。</p>
     </div></section>`;
@@ -209,8 +190,8 @@
     const l = data.letter || {};
     const petals = Array.from({ length: 9 }, (_, i) => `<span class="letter-petal" aria-hidden="true" style="left:${9 + i * 10}%;bottom:${10 + (i % 4) * 11}%;animation-delay:-${i * 1.4}s;font-size:${12 + (i % 3) * 7}px">✧</span>`).join('');
     const paragraphs = (l.paragraphs || []).map(t => `<p>${e(t)}</p>`).join('');
-    return `<section class="scene letter-scene"><div class="letter-layout"><img src="assets/peony-botanical.svg" alt="" class="letter-peony" aria-hidden="true"/>${petals}<span class="eyebrow">${e(l.preface)}</span><h1 class="letter-title">${e(l.title)}</h1>
-      ${state.letterOpened ? `<div class="letter-paper" tabindex="-1"><div class="paper-head">THE MUSEUM OF US · PERSONAL LETTER</div><h3>${e(l.salutation)}</h3>${paragraphs}<div class="letter-sign">${e(l.signature)}</div>${l.date ? `<div class="letter-date">${e(l.date)}</div>` : ''}<div class="letter-postscript">${e(l.postscript)}</div></div><div class="letter-controls"><button class="outline-button" type="button" data-action="close-letter">合上这封信　✉</button><button class="text-button" type="button" data-room="foyer">再回去看看 ↗</button></div>` : `<p class="letter-instruction">这一间展厅，只准备了一封留给你的信。</p><button type="button" class="envelope-button" data-action="open-letter" aria-label="打开给你的信"><span class="envelope-back"></span><span class="envelope-face"></span><span class="envelope-fold"></span><span class="envelope-bottom"></span><span class="wax-seal">❀</span></button><p class="letter-after">轻轻点开信封。<br>有些话，不需要任何观众。</p>`}
+    return `<section class="scene letter-scene"><div class="letter-layout"><img src="assets/peony-botanical.svg" alt="" class="letter-peony" aria-hidden="true"/>${petals}<h1 class="letter-title">${e(l.title)}</h1>
+      ${state.letterOpened ? `<div class="letter-paper" tabindex="-1"><h3>${e(l.salutation)}</h3>${paragraphs}${l.signature ? `<div class="letter-sign">${e(l.signature)}</div>` : ''}${l.date ? `<div class="letter-date">${e(l.date)}</div>` : ''}${l.postscript ? `<div class="letter-postscript">${e(l.postscript)}</div>` : ''}</div><div class="letter-controls"><button class="outline-button" type="button" data-action="close-letter">合上这封信</button><button class="text-button" type="button" data-room="foyer">回到大厅</button></div>` : `<button type="button" class="envelope-button" data-action="open-letter" aria-label="打开给你的信"><span class="envelope-back"></span><span class="envelope-face"></span><span class="envelope-fold"></span><span class="envelope-bottom"></span><span class="wax-seal">❀</span></button>`}
     </div></section>`;
   }
 
@@ -219,16 +200,15 @@
   function updateTourbar() {
     tourbar.hidden = state.room === 'intro';
     if (state.room === 'intro') return;
-    const idx = tourIds.indexOf(state.room);
     const labels = { foyer: '大厅', timeline: '时间', places: '足迹', letter: '一封信' };
     const nav = tourIds.map(id => `<button type="button" class="nav-place ${id === state.room ? 'is-active' : ''}" data-room="${id}" aria-current="${id === state.room ? 'page' : 'false'}">${labels[id]}</button>`).join('');
-    tourbar.innerHTML = `<button type="button" class="nav-arrow" data-action="prev-room" ${idx === 0 ? 'disabled' : ''} aria-label="上一个展厅">←</button><span class="nav-divider"></span>${nav}<span class="nav-divider"></span><button type="button" class="nav-arrow" data-action="next-room" ${idx === tourIds.length - 1 ? 'disabled' : ''} aria-label="下一个展厅">→</button>`;
+    tourbar.innerHTML = nav;
   }
   function updateDrawer() {
-    drawerList.innerHTML = rooms.map(r => `<button type="button" class="drawer-item ${state.room === r.id ? 'is-active' : ''}" data-room="${r.id}"><span class="dr-num">${e(r.number)}</span><span class="dr-title">${e(r.title)}</span><span class="dr-arrow">↗</span></button>`).join('');
+    drawerList.innerHTML = rooms.map(r => `<button type="button" class="drawer-item ${state.room === r.id ? 'is-active' : ''}" data-room="${r.id}"><span class="dr-title">${e(r.title)}</span></button>`).join('');
   }
 
-  /* render({soft:true})：同一展厅内切换（换事件 / 换照片）——不重播入场动画，并把焦点留在原来的按钮上 */
+  /* 同展厅内切换事件不重播入场动画，并尽量保留操作位置。 */
   function render(opts = {}) {
     const active = document.activeElement;
     const focusKey = opts.soft && active && root.contains(active) && active.dataset ? { action: active.dataset.action, index: active.dataset.index } : null;
@@ -242,7 +222,7 @@
     keepActiveNodeVisible();
   }
   function keepActiveNodeVisible() {
-    root.querySelectorAll('.timeline-track .is-active, .chapter-tabs .is-active, .filmstrip .is-active').forEach(el => {
+    root.querySelectorAll('.timeline-track .is-active, .chapter-tabs .is-active').forEach(el => {
       const track = el.parentElement;
       const left = el.offsetLeft - (track.clientWidth - el.offsetWidth) / 2;
       track.scrollTo({ left: Math.max(0, left), behavior: 'auto' });
@@ -260,27 +240,18 @@
     window.scrollTo({ top: 0, behavior: 'instant' });
     root.focus({ preventScroll: true });
   }
-  /* 换事件后，如果展柜已经滚出视野（手机常见），把展柜带回视野 */
+  /* 选完事件直接从这段故事读起，避免手机上先看到几屏导航。 */
   function revealExhibit() {
-    const ex = root.querySelector('.timeline-exhibit');
+    const ex = root.querySelector('.event-reading-head');
     if (!ex) return;
-    const r = ex.getBoundingClientRect();
-    if (r.top < 60 || r.top > window.innerHeight * 0.6) window.scrollTo({ top: window.scrollY + r.top - 96, behavior: reduceMotion ? 'auto' : 'smooth' });
+    ex.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
   }
   function switchEvent(index, reveal = false) {
     const length = data.timeline.length;
     if (!length) return;
     state.timelineIndex = (index + length) % length;
-    state.photoIndex = 0;
     render({ soft: true });
     if (reveal) revealExhibit();
-  }
-  function switchPhoto(direction, absolute = null) {
-    const item = data.timeline[state.timelineIndex];
-    if (!item) return;
-    const { list } = mediaOf(item);
-    state.photoIndex = absolute != null ? absolute : (state.photoIndex + direction + list.length) % list.length;
-    render({ soft: true });
   }
   function switchPlace(index, reveal = false) {
     if (!data.places.length) return;
@@ -389,9 +360,9 @@
   }
 
   function currentLightboxSource(node) {
-    if (state.room === 'places') { const p = data.places[state.placeIndex]; return { list: mediaOf(p).list, start: 0, title: p.name }; }
+    if (state.room === 'places') { const p = data.places[state.placeIndex]; return { list: mediaOf(p).list, start: Number(node.dataset.index) || 0, title: p.name, showBack: node.dataset.side === 'back' }; }
     const item = data.timeline[state.timelineIndex];
-    return { list: mediaOf(item).list, start: state.photoIndex, title: item.title, showBack: Boolean(root.querySelector('.polaroid.is-flipped')) };
+    return { list: mediaOf(item).list, start: Number(node.dataset.index) || 0, title: item.title, showBack: node.dataset.side === 'back' };
   }
 
   document.addEventListener('click', event => {
@@ -409,15 +380,12 @@
       case 'toggle-ambience': toggleAmbience(); break;
       case 'prev-room': navigate(tourIds[Math.max(0, tourIds.indexOf(state.room) - 1)]); break;
       case 'next-room': navigate(tourIds[Math.min(tourIds.length - 1, tourIds.indexOf(state.room) + 1)]); break;
-      case 'select-event': switchEvent(index); break;
+      case 'select-event': switchEvent(index, true); break;
       case 'next-event': switchEvent(state.timelineIndex + 1, true); break;
       case 'prev-event': switchEvent(state.timelineIndex - 1, true); break;
-      case 'prev-photo': switchPhoto(-1); break;
-      case 'next-photo': switchPhoto(1); break;
-      case 'select-photo': switchPhoto(0, index); break;
-      case 'flip-polaroid': { const p = root.querySelector('.polaroid'); const flipped = p?.classList.toggle('is-flipped'); actionNode.textContent = flipped ? '翻回正面 ↻' : '翻到背面看看 ↻'; break; }
+      case 'story-top': root.querySelector('.event-reading-head')?.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); break;
       case 'select-place': switchPlace(index, actionNode.classList.contains('atlas-marker')); break;
-      case 'goto-event': state.timelineIndex = index; state.photoIndex = 0; navigate('timeline'); break;
+      case 'goto-event': state.timelineIndex = index; navigate('timeline'); break;
       case 'goto-place': state.placeIndex = index; navigate('places'); break;
       case 'place-gallery':
       case 'lightbox': { const src = currentLightboxSource(actionNode); if (src.list[0]?.type === 'placeholder') { toast('这件展品还在等待真实照片'); break; } openGallery(src.list, src.start, src.title, src.showBack); break; }
@@ -429,7 +397,7 @@
     }
   });
 
-  /* 手机滑动：展柜照片左右滑切换；灯箱里左右滑切换 */
+  /* 灯箱支持左右滑动；页面中的图片使用正常页面滚动。 */
   let touch = null;
   document.addEventListener('touchstart', ev => { const zone = ev.target.closest('[data-swipe]'); if (!zone || ev.touches.length !== 1) return; touch = { zone: zone.dataset.swipe, x: ev.touches[0].clientX, y: ev.touches[0].clientY }; }, { passive: true });
   document.addEventListener('touchend', ev => {
@@ -437,7 +405,6 @@
     if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
     const dir = dx < 0 ? 1 : -1;
     if (zone === 'gallery') stepGallery(dir);
-    else if (zone === 'photo') { const { list } = mediaOf(data.timeline[state.timelineIndex] || {}); if (list.length > 1) switchPhoto(dir); }
   }, { passive: true });
 
   document.addEventListener('keydown', event => {
@@ -451,8 +418,8 @@
     if (state.drawerOpen) { if (event.key === 'Tab') trapFocus(event, drawer); return; }
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
     if (state.room === 'timeline') {
-      if (event.key === 'ArrowRight') { switchEvent(state.timelineIndex + 1); event.preventDefault(); }
-      if (event.key === 'ArrowLeft') { switchEvent(state.timelineIndex - 1); event.preventDefault(); }
+      if (event.key === 'ArrowRight') { switchEvent(state.timelineIndex + 1, true); event.preventDefault(); }
+      if (event.key === 'ArrowLeft') { switchEvent(state.timelineIndex - 1, true); event.preventDefault(); }
     }
     if (state.room === 'places') {
       if (event.key === 'ArrowRight') { switchPlace(state.placeIndex + 1); event.preventDefault(); }

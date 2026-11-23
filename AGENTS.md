@@ -20,7 +20,7 @@ Plain static HTML/CSS/JS. No bundler, package manager, React, server, or databas
 - `content.js`: editable data source `window.MUSEUM_CONTENT`, currently `demoMode: true`; includes six example events, three example places, a placeholder letter.
 - `styles.css`, `light-theme.css`, `peony-theme.css`: base and layered visual rules; the peony overrides load last.
 - `assets/`: original SVG demo illustrations.
-- `exhibits.css`: loaded last; media components (photo / chat screenshot / polaroid), chapter tabs, filmstrip, lightbox, place↔event links, and fixes.
+- `exhibits.css`: loaded last; full-size inline media, readable conversation screenshots, both sides of polaroids, chapter tabs, lightbox, place↔event links, and fixes.
 - `private/` (git-ignored): real photos and `private/content.js`, which overrides `content.js` when running locally. Never commit it.
 - `tools/prepare_photos.py`: compresses the local photo archive into `private/photos/` and strips EXIF/GPS.
 - `docs/DESIGN_PLAN.md`: current interaction design, audit results and the ordered task list (T1–T7). `docs/CONTENT_GUIDE.md`: content schema.
@@ -39,7 +39,7 @@ The repository is **currently PUBLIC**. Do **not** commit private couple photogr
 5. Keep demo entries labelled as demos. Do not call the website “launched” unless the Pages URL is verified to respond successfully.
 6. Avoid introducing external dependencies, paid services, autoplay music, copyright-infringing music, or complex architecture without an explicit reason.
 7. Prefer small, reviewable commits. For major redesigns, summarize why the change is needed before implementing.
-8. After changes, test entrance → foyer → timeline photo navigation → places → letter open/close → back navigation; test missing photos and long text; verify no console errors.
+8. After changes, test entrance → foyer → timeline event navigation and inline photos → places → letter open/close → back navigation; verify each image opens its own lightbox and the correct polaroid side; test missing photos and long text; verify no console errors.
 
 ## Immediate priorities
 - Verify UI and navigation across phone/desktop, repair any actual defects.

@@ -13,9 +13,9 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="light-theme.css" />
   <link rel="stylesheet" href="peony-theme.css" />
-  <link rel="stylesheet" href="exhibits.css" />
+  <link rel="stylesheet" href="exhibits.css?v=reading-4" />
   <script defer src="content.js"></script>
-  <script defer src="app.js"></script>
+  <script defer src="app.js?v=reading-4"></script>
 </head>
 <body>
   <div class="noise-overlay" aria-hidden="true"></div>
@@ -24,7 +24,7 @@
     <header class="topbar">
       <button class="brand" type="button" data-action="home" aria-label="返回博物馆入口">
         <span class="brand-mark peony-brand" aria-hidden="true">❀</span>
-        <span class="brand-copy"><strong>OUR LITTLE MUSEUM</strong><small>PEONY COLLECTION · 001</small></span>
+        <span class="brand-copy"><strong>OUR LITTLE MUSEUM</strong></span>
       </button>
       <div class="topbar-actions">
         <span class="demo-indicator" id="demo-indicator">DEMO · 等待你的故事</span>
@@ -43,14 +43,12 @@
     </main>
 
     <nav class="tourbar" id="tourbar" aria-label="参观进度" hidden></nav>
-    <footer class="site-foot"><span>MADE WITH CARE, NOT JUST CODE</span><span>OUR STORY IS STILL UNFOLDING · ❀</span></footer>
   </div>
 
   <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
   <aside class="room-drawer" id="room-drawer" aria-label="展厅目录" aria-hidden="true">
-    <div class="drawer-heading"><div><span class="eyebrow">MUSEUM DIRECTORY</span><h2>展厅目录</h2></div><button type="button" class="icon-button" data-action="close-map" aria-label="关闭目录">✕</button></div>
+    <div class="drawer-heading"><h2>展厅目录</h2><button type="button" class="icon-button" data-action="close-map" aria-label="关闭目录">✕</button></div>
     <div id="drawer-room-list" class="drawer-room-list"></div>
-    <p class="drawer-note">这里没有参观期限。你可以随时回来，慢慢看。</p>
   </aside>
 
   <div class="modal-backdrop" id="exhibit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">

@@ -25,8 +25,8 @@ window.MUSEUM_CONTENT = {
   // 事件字段：id, chapter, date, title, subtitle, short, story, highlight(重要日子), quote(原话), place(地点 id), cover, photos
   // photos 每一项可以是路径字符串，也可以是对象：
   //   { src:'private/photos/xx.jpg', caption:'说明' }                       普通照片（完整显示，不裁切）
-  //   { src:'private/photos/xx.jpg', type:'chat' }                          聊天截图（放进手机框，点开看全文）
-  //   { src:'正面.jpg', back:'背面.jpg', type:'polaroid', caption:'…' }      拍立得（可翻面看手写背面）
+  //   { src:'private/photos/xx.jpg', type:'chat', width:1080, height:2400 }  聊天截图（页面内完整展开）
+  //   { src:'正面.jpg', back:'背面.jpg', type:'polaroid', caption:'…' }      拍立得（正面与手写背面一起展示）
   timeline: [
     { id:'beginning', chapter:'c1', place:'place-a', no:'01', date:'日期待填写', title:'故事开始的那一天', subtitle:'THE FIRST PAGE', short:'第一次认识的故事，应该从哪里讲起？', story:'这里留给你写下第一次认识她的情景。你当时注意到了什么？后来再想起那一天，有没有什么和当时不一样的感觉？', cover:'assets/memory-beginning.svg', photos:[] },
     { id:'closer', chapter:'c1', no:'02', date:'日期待填写', title:'慢慢靠近的我们', subtitle:'GETTING CLOSER', short:'从普通的相识，到越来越重要。', story:'记录一次让你开始觉得彼此变得特别的相处：一句话、一顿饭，或者一个没有什么特别安排的下午。', cover:'assets/memory-walk.svg', photos:[] },
