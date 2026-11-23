@@ -20,6 +20,10 @@ Plain static HTML/CSS/JS. No bundler, package manager, React, server, or databas
 - `content.js`: editable data source `window.MUSEUM_CONTENT`, currently `demoMode: true`; includes six example events, three example places, a placeholder letter.
 - `styles.css`, `light-theme.css`, `peony-theme.css`: base and layered visual rules; the peony overrides load last.
 - `assets/`: original SVG demo illustrations.
+- `exhibits.css`: loaded last; media components (photo / chat screenshot / polaroid), chapter tabs, filmstrip, lightbox, place↔event links, and fixes.
+- `private/` (git-ignored): real photos and `private/content.js`, which overrides `content.js` when running locally. Never commit it.
+- `tools/prepare_photos.py`: compresses the local photo archive into `private/photos/` and strips EXIF/GPS.
+- `docs/DESIGN_PLAN.md`: current interaction design, audit results and the ordered task list (T1–T7). `docs/CONTENT_GUIDE.md`: content schema.
 - `PROJECT_HANDOFF.md`: context, scope, status, next steps.
 
 Start locally: `python3 -m http.server 8000`, then open `http://localhost:8000/`.

@@ -29,6 +29,11 @@
 | `light-theme.css` | 明亮主题覆盖 |
 | `peony-theme.css` | 奶油白、芍药粉、浅香槟金主题覆盖 |
 | `assets/` | 当前原创 SVG 占位插画；后续可放获授权的公开图片 |
+| `exhibits.css` | 真实素材展品组件（照片 / 聊天截图 / 拍立得）、篇章、灯箱与交互修复，最后加载 |
+| `tools/prepare_photos.py` | 把本地照片归档压缩、去除 GPS，输出到 `private/` |
+| `private/` | **本地私密内容**（真实照片与 `private/content.js`），已被 `.gitignore` 排除 |
+| `docs/DESIGN_PLAN.md` | 交互界面设计方案、审查结论、Codex 任务清单 |
+| `docs/CONTENT_GUIDE.md` | 内容维护指南：怎么加照片、事件、地点、信 |
 
 本地运行：
 
@@ -39,6 +44,8 @@ python3 -m http.server 8000
 然后打开 `http://localhost:8000/`。也可直接打开 `index.html`，但建议使用本地服务器检查实际部署行为。
 
 ## 如何添加真实内容
+
+> **新的推荐方式**：真实内容写在本地 `private/content.js`（不进 Git），照片用 `python3 tools/prepare_photos.py` 处理。完整说明见 [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)。下面是 `content.js` 字段的简要说明。
 
 重点修改 `content.js` 中的 `window.MUSEUM_CONTENT`：
 

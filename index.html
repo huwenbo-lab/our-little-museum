@@ -7,9 +7,13 @@
   <meta name="description" content="一座为你而建的私人博物馆，收藏关于我们的故事。" />
   <title>Our Little Museum · 我们的爱情博物馆</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <!-- 网络字体改为非阻塞加载：国内访问 Google Fonts 失败时，页面不再白屏等待，直接使用系统宋体/苹方 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="light-theme.css" />
   <link rel="stylesheet" href="peony-theme.css" />
+  <link rel="stylesheet" href="exhibits.css" />
   <script defer src="content.js"></script>
   <script defer src="app.js"></script>
 </head>

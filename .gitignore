@@ -1,0 +1,5 @@
+# 私密内容：真实照片、真实故事、情书只放在本地 private/，绝不提交到公开仓库
+private/*
+!private/README.md
+.DS_Store
+.claude/

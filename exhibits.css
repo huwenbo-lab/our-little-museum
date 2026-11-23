@@ -1,0 +1,155 @@
+/* =====================================================================
+ * EXHIBITS — 真实素材展品组件 + 交互修复（最后加载）
+ * 照片 / 聊天截图 / 拍立得、篇章标签、缩略图条、地点↔时间互链、灯箱
+ * 只用芍药主题的既有色彩：奶油白 #fffaf6、墨粉 #493739、芍药粉、浅香槟金
+ * ===================================================================== */
+:root {
+  --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif CJK SC', serif;
+  --font-sans: 'DM Sans', -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --peony: #b9747c;
+  --peony-soft: rgba(201, 132, 136, .14);
+  --paper: #fffdf9;
+  --line: #e6d4ca;
+}
+
+/* ---------- 修复：关闭状态的目录抽屉阴影漏到页面右缘、且仍可被 Tab 聚焦 ---------- */
+/* 阴影只在打开时出现；关闭时由 app.js 设置 inert，里面的按钮不会被 Tab 选中 */
+.room-drawer { box-shadow: none; transition: transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s; }
+.room-drawer.is-open { box-shadow: -17px 0 65px rgba(91,60,49,.15); }
+
+/* 同一展厅内切换（换事件 / 换照片）不重播整页入场动画 */
+.scene.is-soft { animation: none; }
+.scene.is-soft .letter-paper { animation: paper-rise .8s cubic-bezier(.16,.84,.31,1) both; }
+
+/* 触屏可点区域最少 44px */
+.mini-arrow { min-width: 44px; min-height: 44px; color: #a26c70; }
+.outline-button:disabled { opacity: .35; cursor: default; }
+
+/* ---------- 入口 / 大厅的相识天数 ---------- */
+.entry-days { margin: 4px 0 22px; font-size: 13px; letter-spacing: .14em; color: #a06a76; }
+.entry-days strong { font-family: var(--font-serif); font-size: 22px; font-weight: 500; color: #8f5562; margin: 0 4px; }
+.tile-count { display: block; margin-top: 6px; font-size: 10px; letter-spacing: .16em; color: #a77b7c; }
+.foyer-floor strong { color: #8f5562; font-weight: 600; }
+
+/* ---------- 时间长廊：篇章标签 ---------- */
+.chapter-tabs { display: flex; gap: 10px; margin: 34px 0 0; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chapter-tabs::-webkit-scrollbar { display: none; }
+.chapter-tab { flex: 0 0 auto; text-align: left; background: transparent; border: 1px solid var(--line); color: #7c6467; padding: 10px 16px; min-height: 48px; transition: .25s; }
+.chapter-tab small { display: block; font-size: 10px; letter-spacing: .14em; color: #b08a87; }
+.chapter-tab span { font-family: var(--font-serif); font-size: 14px; letter-spacing: .06em; }
+.chapter-tab:hover { border-color: #d3aaa5; }
+.chapter-tab.is-active { background: #fff; border-color: #c99096; color: #874c58; box-shadow: 0 8px 22px rgba(150,95,90,.08); }
+.chapter-intro { margin: 16px 0 0; max-width: 720px; color: #7a6463; font-size: 13px; line-height: 1.9; }
+.chapter-tabs + .timeline-track, .chapter-intro + .timeline-track { margin-top: 18px; }
+
+/* 节点：日期 + 标题；重要日子用芍药色点 */
+.timeline-track { scroll-snap-type: x proximity; scrollbar-color: #dcbcb4 transparent; }
+.timeline-node { flex: 0 0 auto; min-width: 140px; max-width: 200px; scroll-snap-align: center; min-height: 48px; }
+.timeline-node span { overflow: hidden; text-overflow: ellipsis; }
+.timeline-node.is-highlight:before { background: var(--peony); border-color: var(--peony); }
+.timeline-node.is-highlight small:after { content: ' ❀'; color: var(--peony); }
+
+/* ---------- 展柜：统一的媒体舞台 ---------- */
+.photo-mat { background: var(--paper); border: 1px solid var(--line); box-shadow: 0 18px 48px rgba(115,80,66,.10); }
+.cover-frame { background: #f3e7df; touch-action: pan-y; }
+.media-stage { position: relative; aspect-ratio: 4 / 3; width: 100%; overflow: hidden; display: grid; place-items: center; }
+.media-stage button { border: 0; padding: 0; background: transparent; cursor: zoom-in; display: block; }
+/* 照片：完整显示（不裁人脸），四周用同图的柔焦放大做底 */
+.media-stage.is-photo::before { content: ""; position: absolute; inset: -24px; background: var(--bg) center / cover no-repeat; filter: blur(22px) saturate(.9) brightness(1.06); opacity: .55; }
+.media-stage.is-photo .photo-button { position: relative; width: 100%; height: 100%; }
+.exhibit-photo { width: 100%; height: 100%; object-fit: contain; display: block; }
+.media-stage.is-photo.is-cover .exhibit-photo { object-fit: cover; }
+.media-stage.is-placeholder .photo-button { width: 100%; height: 100%; }
+.media-stage.is-placeholder .exhibit-cover { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+
+/* 聊天截图：放进一部柔和的“手机”里，只露出上半部，点开看全文 */
+.media-stage.is-chat { background: radial-gradient(ellipse at 50% 40%, #fbefe9, #f1e1d8); }
+.chat-phone { position: relative; height: 92%; aspect-ratio: 9 / 17; border-radius: 22px !important; background: #fff !important; padding: 7px !important; box-shadow: 0 0 0 1px #e3cdc3, 0 16px 34px rgba(120,80,64,.16); overflow: hidden; }
+.chat-shot { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 16px; display: block; }
+.chat-hint { position: absolute; left: 7px; right: 7px; bottom: 7px; padding: 26px 0 9px; border-radius: 0 0 16px 16px; background: linear-gradient(transparent, rgba(255,250,246,.96) 55%); font-size: 11px; letter-spacing: .12em; color: #96656c; }
+
+/* 拍立得：素材是「相册内页翻拍」——横图、正面 + 背面手写各一张。做成一页可 3D 翻面的相册纸 */
+.media-stage.is-polaroid { background: radial-gradient(ellipse at 50% 45%, #fbf1ea, #efe0d6); gap: 10px; align-content: center; }
+.polaroid { width: 86%; aspect-ratio: var(--ratio, 4 / 3); perspective: 1400px; transform: rotate(-1.2deg); }
+.polaroid-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,.7,.2,1); }
+.polaroid.is-flipped .polaroid-inner { transform: rotateY(180deg); }
+.polaroid-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #fff; padding: 6px; box-shadow: 0 14px 30px rgba(110,72,60,.18); }
+.polaroid-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.polaroid-back { transform: rotateY(180deg); }
+.flip-button { position: relative; z-index: 2; border: 1px solid #ddbcb4 !important; background: rgba(255,253,249,.92) !important; color: #8f5562; font-size: 12px; letter-spacing: .1em; padding: 7px 14px !important; min-height: 40px; cursor: pointer !important; }
+
+.photo-label { pointer-events: none; }
+.media-caption { margin: 12px 2px 0; font-size: 12px; color: #866e6c; line-height: 1.7; }
+
+/* 缩略图条 */
+.filmstrip { display: flex; gap: 8px; overflow-x: auto; padding: 12px 2px 2px; scrollbar-width: none; }
+.filmstrip::-webkit-scrollbar { display: none; }
+.film-thumb { flex: 0 0 auto; width: 58px; height: 58px; padding: 0; border: 1px solid var(--line); background: #f5ebe4; opacity: .62; transition: .2s; }
+.film-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.film-thumb.is-chat img { object-position: top; }
+.film-thumb.is-active { opacity: 1; border-color: var(--peony); box-shadow: 0 0 0 2px var(--peony-soft); }
+
+/* 展品文字 */
+.timeline-exhibit { align-items: start; }
+.event-content { padding-top: 8px; }
+.event-story { white-space: pre-line; }
+.peony-day { color: var(--peony); }
+.timeline-exhibit.is-highlight .event-num { color: rgba(185,116,124,.35); }
+.event-quote { margin: 22px 0 0; padding: 14px 18px; border-left: 2px solid #dcaeb0; background: rgba(255,255,255,.6); font-family: var(--font-serif); font-size: 16px; color: #7d4f58; letter-spacing: .05em; }
+.exhibit-controls { flex-wrap: wrap; }
+.exhibit-controls .outline-button[data-action="prev-event"] { min-width: 51px; padding: 14px 16px; }
+
+/* ---------- 足迹展厅 ---------- */
+.atlas-marker { overflow: visible; }
+.marker-name { position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11px; letter-spacing: .08em; color: #8a6669; background: rgba(255,251,247,.85); padding: 1px 7px; pointer-events: none; }
+.visit-count { position: absolute; top: -6px; right: -10px; font-size: 9px; background: var(--peony); color: #fff; border-radius: 9px; padding: 1px 5px; letter-spacing: 0; }
+.place-cover { display: block; width: 100%; border: 0; padding: 0; cursor: zoom-in; }
+.place-count { position: absolute; z-index: 2; right: 12px; bottom: 12px; font-size: 11px; letter-spacing: .1em; color: #fff; background: rgba(110,70,72,.55); padding: 4px 10px; }
+.place-visits { margin: 18px 0 6px; display: grid; gap: 6px; }
+.place-visits .eyebrow { margin-bottom: 4px; }
+.visit-link { display: flex; align-items: baseline; gap: 12px; text-align: left; border: 0; border-bottom: 1px solid #efe1d9; background: transparent; padding: 9px 0; color: #5e4a4c; font-family: var(--font-serif); font-size: 14px; }
+.visit-link small { font-family: var(--font-sans); font-size: 11px; color: #a77b7c; min-width: 84px; letter-spacing: .04em; }
+.visit-link span { margin-left: auto; color: #b9747c; }
+.visit-link:hover { color: #8f5562; }
+
+/* ---------- 灯箱 ---------- */
+.exhibit-modal { max-width: min(920px, 100%); padding: clamp(22px, 4vw, 48px); }
+.lightbox-frame { margin-top: 14px; touch-action: pan-y; }
+.lightbox-image { max-height: 70vh; }
+.lightbox-frame.is-chat { max-height: 72vh; overflow-y: auto; border: 1px solid var(--line); }
+.lightbox-frame.is-chat .lightbox-image { max-height: none; width: min(420px, 100%); margin: 0 auto; display: block; }
+.lightbox-nav { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 10px; font-size: 11px; letter-spacing: .16em; color: #a77b7c; }
+
+/* ---------- 终厅：信封真的被打开 ---------- */
+.envelope-button.is-opening { cursor: default; }
+.envelope-button.is-opening .envelope-fold { transform: rotateX(180deg); transition: transform .6s ease-in; }
+.envelope-button.is-opening .wax-seal { transform: scale(0); opacity: 0; transition: .3s; }
+.envelope-button.is-opening::after { content: ""; position: absolute; left: 9%; right: 9%; top: 8%; height: 80%; background: #fffdf7; z-index: 2; animation: letter-peek .8s .25s ease-out both; box-shadow: 0 -4px 14px rgba(120,80,64,.1); }
+@keyframes letter-peek { from { transform: translateY(0); } to { transform: translateY(-46%); } }
+.letter-paper:focus { outline: none; }
+.letter-date { text-align: right; font-size: 12px; color: #a08584; margin-top: 4px; letter-spacing: .08em; }
+
+/* ---------- 手机 ---------- */
+@media (max-width: 800px) {
+  /* 底部导航改为贴底常驻（原来手机端只在页面最底部出现） */
+  .tourbar { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; bottom: calc(10px + env(safe-area-inset-bottom)) !important; margin: 0 !important; width: calc(100% - 22px) !important; max-width: 460px; justify-content: space-between; }
+  .scene > .room-content, .letter-layout { padding-bottom: 110px !important; }
+  .site-foot { padding-bottom: 90px; }
+}
+@media (max-width: 550px) {
+  .media-stage { aspect-ratio: 1 / 1; } /* 横竖照片折中：都只留很窄的柔焦边 */
+  .media-stage.is-placeholder { aspect-ratio: 4 / 3; }
+  .chapter-tabs { margin-top: 22px; margin-right: -24px; }
+  .chapter-tab { padding: 8px 12px; }
+  .timeline-track { margin-right: -24px; }
+  .timeline-node { min-width: 128px; }
+  .event-quote { font-size: 15px; }
+  .marker-name { font-size: 10px; }
+  .film-thumb { width: 50px; height: 50px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .polaroid-inner { transition: none; }
+}
+
+/* 聊天截图 / 拍立得自带提示与翻面按钮，角标会挡住它们 */
+.cover-frame:has(.is-chat, .is-polaroid) .photo-label { display: none; }
