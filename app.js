@@ -43,7 +43,7 @@
   const rooms = [
     { id: 'foyer', title: '中央大厅', en: 'THE GRAND FOYER', number: '00', image: 'assets/room-foyer.svg', description: '从这里选择你想去的展厅' },
     { id: 'timeline', title: '时间长廊', en: 'OUR TIMELINE', number: '01', image: 'assets/memory-walk.svg', description: '从最初的我们，一直走到今天' },
-    { id: 'places', title: '足迹展厅', en: 'PLACES WE KEEP', number: '02', image: 'assets/place-city.svg', description: '把去过的地方，变成共同记忆' },
+    { id: 'places', title: '足迹展厅', en: 'PLACES WE KEEP', number: '02', image: 'assets/place-city.svg', description: '重访故事发生的地方' },
     { id: 'letter', title: '终厅 · 一封信', en: 'THE LAST ROOM', number: '03', image: 'assets/room-letter.svg', description: '在参观的最后，有些话想对你说' }
   ];
   const state = { room: 'intro', timelineIndex: 0, placeIndex: 0, letterOpened: false, drawerOpen: false, modalOpen: false, soundOn: false, soundNodes: null, gallery: null };
@@ -180,7 +180,7 @@
   /* 足迹星图的布局：
    * 1. 有 lat/lng 的地点按大致方位投影（只保留相对位置，不按比例）；没有的用 x/y；
    * 2. 太近的光点互相推开（南昌、华林、吴城这类邻近地点不会叠在一起）；
-   * 3. 按“第一次一起留下回忆”的先后排序，连成一条星座线，左右键和地点条也按这个顺序。 */
+   * 3. 按相关回忆在时间线中首次出现的顺序连线，左右键和地点条也按这个顺序。 */
   function placeLayout() {
     const hasGeo = p => p.lat !== null && p.lat !== undefined && p.lng !== null && p.lng !== undefined && Number.isFinite(+p.lat) && Number.isFinite(+p.lng);
     const firstVisit = p => { const idx = (p.events || []).map(id => data.timeline.findIndex(ev => ev.id === id)).filter(i => i >= 0); return idx.length ? Math.min(...idx) : Infinity; };
@@ -232,8 +232,7 @@
     const place = data.places[state.placeIndex] || data.places[0];
     if (!place) return '<section class="scene"><div class="room-content"><h1 class="display-title">还没有地点展品</h1></div></section>';
     const { order, pos } = placeLayout();
-    const stop = order.indexOf(state.placeIndex) + 1;
-    // 星座线：按第一次去的先后两两相连；和当前地点相连的两段（从哪里来、下一站去哪）加深
+    // 关联回忆首次出现的顺序决定连线；当前地点相邻的两段加深。
     const stops = order.filter(i => (data.places[i].events || []).length);
     const route = stops.slice(1).map((to, n) => { const from = stops[n]; const near = from === state.placeIndex || to === state.placeIndex; return `<line x1="${pos[from].x.toFixed(2)}" y1="${pos[from].y.toFixed(2)}" x2="${pos[to].x.toFixed(2)}" y2="${pos[to].y.toFixed(2)}" class="${near ? 'is-near' : ''}"/>`; }).join('');
     const markers = data.places.map((p, i) => {
@@ -242,22 +241,22 @@
     }).join('');
     const chips = order.map(i => `<button type="button" class="place-chip ${i === state.placeIndex ? 'is-active' : ''}" data-action="select-place" data-index="${i}" aria-pressed="${i === state.placeIndex}">${e(data.places[i].short || data.places[i].name)}</button>`).join('');
     const linked = (Array.isArray(place.events) ? place.events : []).map(id => data.timeline.findIndex(ev => ev.id === id)).filter(i => i >= 0);
-    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">在这里发生过 · ${linked.length} 段回忆</span>${linked.map(i => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}</button>`).join('')}</div>` : '';
-    const since = linked.length ? ` · ${e(data.timeline[linked[0]].date)}` : '';
+    const visits = linked.length ? `<div class="place-visits"><span class="eyebrow">与这里有关的回忆 · ${linked.length} 段</span>${linked.map(i => `<button type="button" class="visit-link" data-action="goto-event" data-index="${i}"><small>${e(data.timeline[i].date)}</small>${e(data.timeline[i].title)}</button>`).join('')}</div>` : '';
+    const since = linked.length ? e(data.timeline[linked[0]].date) : '';
     return `<section class="scene places-scene"><div class="room-content">
       <div class="section-head"><h1 class="display-title">足迹展厅</h1></div>
       <div class="atlas-layout">
         <div class="atlas-aside">
-          <div class="atlas-map star-map" role="group" aria-label="我们去过的地方">
+          <div class="atlas-map star-map" role="group" aria-label="故事发生的地方">
             <svg class="atlas-route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${route}</svg>
             ${markers}
             <span class="atlas-compass" aria-hidden="true">北</span>
           </div>
-          <p class="places-footnote">光点按大致方位摆放，不按比例。连线按我们第一次在各地留下回忆的先后，深色的两段是这一站的来处和下一站。</p>
+          <p class="places-footnote">光点按大致方位摆放，不按比例；连线跟随相关回忆首次出现的顺序。</p>
         </div>
         <article class="place-detail">
           <div class="place-chips" role="group" aria-label="选择地点">${chips}</div>
-          <div class="place-copy"><span class="place-order">第 ${stop} 站${since}</span><h3>${e(place.name)}</h3>${place.caption ? `<p class="place-caption">${e(place.caption)}</p>` : ''}<p>${e(place.description)}</p>${visits}</div>
+          <div class="place-copy">${since ? `<span class="place-order">${since}</span>` : ''}<h3>${e(place.name)}</h3>${place.caption ? `<p class="place-caption">${e(place.caption)}</p>` : ''}<p>${e(place.description)}</p>${visits}</div>
           ${memoryGallery(place)}
         </article>
       </div>
